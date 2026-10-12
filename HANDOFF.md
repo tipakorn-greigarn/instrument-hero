@@ -32,7 +32,6 @@ timing and pitch feedback). Gitflow: work on `develop`, releases merged to
 - Extra notes that are not in the score are not penalized, on any difficulty.
   Worth adding to Hard once attack detection is proven on a real instrument.
 - Major keys only; no ties, repeats, or pickup bars in the song format.
-- No license file yet; the owner has not chosen one.
 - Non-octave transposing instruments are supported by the data model
   (`writtenKeyFifths`) but none is defined or tested.
 
