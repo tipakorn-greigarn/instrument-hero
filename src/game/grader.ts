@@ -12,9 +12,13 @@ export interface Target {
 
 export type Verdict = 'perfect' | 'good' | 'ok' | 'wrong' | 'miss';
 
+export type TimingVerdict = 'perfect' | 'good' | 'ok';
+
 export interface NoteResult {
   verdict: Verdict;
-  /** Timing error in seconds, positive when late. Set for hits. */
+  /** How close the attack was in time, whatever its pitch. Unset for misses. */
+  timing?: TimingVerdict;
+  /** Timing error in seconds, positive when late. Set for hits and wrong notes. */
   dt?: number;
   /** Pitch error in cents. Set for hits. */
   cents?: number;
@@ -35,6 +39,13 @@ export interface Summary {
   meanDtMs: number | null;
   /** Mean absolute pitch error of the hits in cents, null without hits. */
   meanAbsCents: number | null;
+  /** Share of notes played with the right pitch, 0-100. */
+  pitchPct: number;
+  /** Average timing score of the notes with the right pitch, 0-100; null without hits. */
+  timingPct: number | null;
+  /** Hits that were not Perfect, split by direction. */
+  early: number;
+  late: number;
   results: NoteResult[];
 }
 
@@ -149,6 +160,11 @@ export class Grader {
     return this.rules.anyOctave ? diff - 12 * Math.round(diff / 12) : diff;
   }
 
+  private timingVerdict(dt: number): TimingVerdict {
+    const abs = Math.abs(dt);
+    return abs <= this.rules.perfect ? 'perfect' : abs <= this.rules.good ? 'good' : 'ok';
+  }
+
   private timingScore(verdict: Verdict): number {
     if (verdict === 'perfect') return 1;
     if (verdict === 'good') return this.rules.goodScore;
@@ -184,12 +200,12 @@ export class Grader {
 
       if (hit) {
         const dt = hit.t - offset - target.time;
-        const abs = Math.abs(dt);
-        const verdict: Verdict = abs <= this.rules.perfect ? 'perfect' : abs <= this.rules.good ? 'good' : 'ok';
+        const verdict = this.timingVerdict(dt);
         this.used.add(hit);
         this.matched[i] = hit;
         this.results[i] = {
           verdict,
+          timing: verdict,
           dt,
           cents: this.pitchError(hit.midi!, target.midi) * 100,
           sustain: 1,
@@ -199,7 +215,14 @@ export class Grader {
       } else if (now > target.time + tol + SETTLE_SECONDS) {
         if (other) {
           this.used.add(other);
-          this.results[i] = { verdict: 'wrong', playedMidi: other.midi!, sustain: 0, score: 0 };
+          this.results[i] = {
+            verdict: 'wrong',
+            timing: this.timingVerdict(other.t - offset - target.time),
+            dt: other.t - offset - target.time,
+            playedMidi: other.midi!,
+            sustain: 0,
+            score: 0,
+          };
         } else {
           this.results[i] = { verdict: 'miss', sustain: 0, score: 0 };
         }
@@ -217,6 +240,9 @@ export class Grader {
     let dtSum = 0;
     let centsSum = 0;
     let hits = 0;
+    let timingSum = 0;
+    let early = 0;
+    let late = 0;
     const results = this.results.map((result, i) => {
       const r = result!;
       const event = this.matched[i];
@@ -226,6 +252,11 @@ export class Grader {
         r.score = weight * this.timingScore(r.verdict) + (1 - weight) * r.sustain;
         dtSum += r.dt!;
         centsSum += Math.abs(r.cents!);
+        timingSum += this.timingScore(r.verdict);
+        if (r.verdict !== 'perfect') {
+          if (r.dt! > 0) late++;
+          else early++;
+        }
         hits++;
       }
       counts[r.verdict]++;
@@ -239,6 +270,10 @@ export class Grader {
       counts,
       meanDtMs: hits ? (1000 * dtSum) / hits : null,
       meanAbsCents: hits ? centsSum / hits : null,
+      pitchPct: results.length ? (100 * hits) / results.length : 0,
+      timingPct: hits ? (100 * timingSum) / hits : null,
+      early,
+      late,
       results,
     };
   }

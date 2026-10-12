@@ -12,7 +12,7 @@ export interface Settings {
   difficulty: string;
   metronome: boolean;
   guide: boolean;
-  /** Input device id, or SIMULATED. */
+  /** Input device id, or one of the SIMULATED values. */
   device: string;
   channel: Channel;
   /** Extra timing compensation in milliseconds, added to what the browser reports. */
@@ -30,6 +30,8 @@ export interface BestScore {
 }
 
 export const SIMULATED = 'simulated';
+/** A simulated player that makes deliberate mistakes, to show what feedback looks like. */
+export const SIMULATED_SLOPPY = 'simulated-sloppy';
 
 const SETTINGS_KEY = 'instrument-hero.settings';
 const BEST_KEY = 'instrument-hero.best';

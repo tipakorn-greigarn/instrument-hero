@@ -3,8 +3,8 @@
 
 import { Accidental, Barline, Beam, Dot, Formatter, Fraction, Renderer, Stave, StaveNote, Voice } from 'vexflow';
 import type { Arrangement } from '../music/arrange';
-import type { Verdict } from '../game/grader';
-import { pitchToVex } from '../music/theory';
+import type { NoteResult, Target } from '../game/grader';
+import { midiName, pitchToVex } from '../music/theory';
 
 interface System {
   top: number;
@@ -14,17 +14,35 @@ interface System {
   points: { quarter: number; x: number }[];
 }
 
-const SYSTEM_HEIGHT = 150;
+interface Cells {
+  timing: HTMLDivElement;
+  pitch: HTMLDivElement;
+}
+
+const SYSTEM_HEIGHT = 200;
+/** Vertical position of the two feedback lanes below each staff. */
+const TIMING_LANE = 140;
+const PITCH_LANE = 168;
+/** Timing error drawn at full deflection, in seconds, and that deflection in pixels. */
+const TIMING_FULL_SCALE = 0.15;
+const TIMING_DEFLECTION = 10;
+/** Pitch error drawn at full deflection, in cents, and that deflection in pixels. */
+const PITCH_FULL_SCALE = 50;
+const PITCH_DEFLECTION = 7;
+/** Thickness of a marker bar, and its length when the error is zero. */
+const MARKER = 8;
+/** Pitch errors up to this many cents are shown as in tune. */
+const IN_TUNE_CENTS = 15;
 const MARGIN = 12;
 const MIN_MEASURE_WIDTH = 210;
 const MAX_PER_SYSTEM = 4;
-const VERDICT_CLASSES: Verdict[] = ['perfect', 'good', 'ok', 'wrong', 'miss'];
 
 export class SheetView {
   private readonly surface: HTMLDivElement;
   private readonly cursor: HTMLDivElement;
   private systems: System[] = [];
-  private noteElements: (SVGElement | undefined)[] = [];
+  private readonly lanes: HTMLDivElement;
+  private cells: Cells[] = [];
   private cursorSystem = -1;
 
   constructor(private readonly container: HTMLElement) {
@@ -32,7 +50,8 @@ export class SheetView {
     this.cursor = document.createElement('div');
     this.cursor.className = 'cursor';
     this.cursor.hidden = true;
-    container.append(this.surface, this.cursor);
+    this.lanes = document.createElement('div');
+    container.append(this.surface, this.lanes, this.cursor);
   }
 
   render(arrangement: Arrangement): void {
@@ -43,7 +62,8 @@ export class SheetView {
 
     this.surface.innerHTML = '';
     this.systems = [];
-    this.noteElements = [];
+    this.lanes.replaceChildren();
+    this.cells = [];
     this.cursorSystem = -1;
 
     const width = Math.max(320, this.container.clientWidth);
@@ -64,9 +84,6 @@ export class SheetView {
       .addTimeSignature(timeSpec)
       .getNoteStartX();
     const otherOffset = new Stave(0, 0, 300).addClef(clef).addKeySignature(writtenKey.vex).getNoteStartX();
-
-    const staveNotes: StaveNote[] = [];
-    const noteIndices: number[] = [];
 
     for (let s = 0; s < systemCount; s++) {
       const leadOffset = s === 0 ? firstOffset : otherOffset;
@@ -109,10 +126,7 @@ export class SheetView {
         measure.forEach((n, k) => {
           const note = notes[k];
           system.points.push({ quarter: n.start, x: (note.getNoteHeadBeginX() + note.getNoteHeadEndX()) / 2 });
-          if (n.noteIndex >= 0) {
-            staveNotes.push(note);
-            noteIndices.push(n.noteIndex);
-          }
+          if (n.noteIndex >= 0) this.cells[n.noteIndex] = this.addCells(system.points[system.points.length - 1].x, top);
         });
 
         const last = measure[measure.length - 1];
@@ -124,11 +138,9 @@ export class SheetView {
       // The cursor runs on to the final barline of the system.
       system.points.push({ quarter: system.endQuarter, x: x - 2 });
       this.systems.push(system);
+      this.addLabel('Timing', top + TIMING_LANE);
+      this.addLabel('Pitch', top + PITCH_LANE);
     }
-
-    staveNotes.forEach((note, i) => {
-      this.noteElements[noteIndices[i]] = note.getSVGElement();
-    });
     this.setCursor(null);
   }
 
@@ -164,13 +176,80 @@ export class SheetView {
     this.cursorSystem = index;
   }
 
-  mark(noteIndex: number, verdict: Verdict): void {
-    this.noteElements[noteIndex]?.classList.add(`is-${verdict}`);
+  private addLabel(text: string, y: number): void {
+    const label = document.createElement('div');
+    label.className = 'lane-label';
+    label.textContent = text;
+    label.style.top = `${y}px`;
+    this.lanes.append(label);
+  }
+
+  private addCells(x: number, top: number): Cells {
+    const make = (kind: string, y: number) => {
+      const cell = document.createElement('div');
+      cell.className = `cell ${kind}`;
+      cell.style.left = `${x}px`;
+      cell.style.top = `${top + y}px`;
+      cell.append(document.createElement('i'));
+      this.lanes.append(cell);
+      return cell;
+    };
+    return { timing: make('timing', TIMING_LANE), pitch: make('pitch', PITCH_LANE) };
+  }
+
+  /**
+   * Show a note's result in the two lanes. Timing: a bar reaching left of the
+   * tick is early, right is late. Pitch: a bar reaching above the line is
+   * sharp, below is flat; a wrong note shows the name of the note played.
+   */
+  mark(noteIndex: number, result: NoteResult, target: Target, flats: boolean): void {
+    const cells = this.cells[noteIndex];
+    if (!cells) return;
+    this.reset(cells);
+    const { timing, pitch } = cells;
+
+    if (result.verdict === 'miss') {
+      timing.classList.add('marked', 'is-none', 'text');
+      timing.append('x');
+      timing.title = 'No note was played here';
+      return;
+    }
+
+    const ms = Math.round(result.dt! * 1000);
+    const fraction = Math.max(-1, Math.min(1, result.dt! / TIMING_FULL_SCALE));
+    const timingClass = result.timing === 'perfect' ? 'is-good' : result.timing === 'good' ? 'is-near' : 'is-off';
+    timing.classList.add('marked', timingClass);
+    // A bar growing from the tick toward the side the note fell on.
+    const bar = timing.firstElementChild as HTMLElement;
+    bar.style.width = `${MARKER + Math.abs(fraction) * TIMING_DEFLECTION}px`;
+    bar.style[fraction < 0 ? 'right' : 'left'] = `calc(50% - ${MARKER / 2}px)`;
+    timing.title = ms === 0 ? 'On time' : `${Math.abs(ms)} ms ${ms > 0 ? 'late' : 'early'}`;
+
+    if (result.verdict === 'wrong') {
+      const played = result.playedMidi!;
+      pitch.classList.add('marked', 'is-bad', 'text');
+      pitch.append(midiName(played, flats).replace(/-?\d+$/, ''));
+      pitch.title = `Played ${midiName(played, flats)}, expected ${midiName(target.midi, flats)} (${played > target.midi ? 'too high' : 'too low'})`;
+    } else {
+      const cents = Math.round(result.cents!);
+      const offset = Math.max(-1, Math.min(1, cents / PITCH_FULL_SCALE));
+      pitch.classList.add('marked', Math.abs(cents) <= IN_TUNE_CENTS ? 'is-good' : 'is-near');
+      const bar = pitch.firstElementChild as HTMLElement;
+      bar.style.height = `${MARKER + Math.abs(offset) * PITCH_DEFLECTION}px`;
+      bar.style[offset > 0 ? 'bottom' : 'top'] = `calc(50% - ${MARKER / 2}px)`;
+      pitch.title = cents === 0 ? 'In tune' : `${Math.abs(cents)} cents ${cents > 0 ? 'sharp' : 'flat'}`;
+    }
+  }
+
+  private reset(cells: Cells): void {
+    for (const [kind, cell] of [['timing', cells.timing], ['pitch', cells.pitch]] as const) {
+      cell.className = `cell ${kind}`;
+      cell.title = '';
+      cell.replaceChildren(document.createElement('i'));
+    }
   }
 
   clearMarks(): void {
-    for (const element of this.noteElements) {
-      element?.classList.remove(...VERDICT_CLASSES.map((v) => `is-${v}`));
-    }
+    this.cells.forEach((cells) => this.reset(cells));
   }
 }

@@ -1,16 +1,18 @@
 # HANDOFF
 
-State as of 2026-10-12: v0.2.0 (first request plus difficulty levels), on
-branch `develop` (gitflow; `main` holds only the scaffolding commit until a
-release is cut).
+State as of 2026-10-12: v0.3.0 (first request, difficulty levels, separate
+timing and pitch feedback). Gitflow: work on `develop`, releases merged to
+`main` and tagged. Remote: https://github.com/tipakorn-greigarn/instrument-hero
 
 ## What works
 
 - Song, key, instrument, range, tempo, and difficulty (Easy, Normal, Hard) selection; notation rendering; cursor;
   metronome and count-in; guide melody; input device and channel selection;
-  per-note grading on the sheet; result summary; best scores and settings in
+  per-note timing and pitch lanes under the staff; result summary with
+  separate timing and pitch percentages; best scores and settings in
   localStorage.
-- Automated tests (39) and a browser self-test with the simulated player.
+- Automated tests (41) and browser self-tests with the two simulated players
+  (a clean one and one that makes deliberate mistakes).
 
 ## Not yet verified
 
@@ -30,7 +32,7 @@ release is cut).
 - Extra notes that are not in the score are not penalized, on any difficulty.
   Worth adding to Hard once attack detection is proven on a real instrument.
 - Major keys only; no ties, repeats, or pickup bars in the song format.
-- Beams and the stems of beamed notes stay black when a note is colored.
+- No license file yet; the owner has not chosen one.
 - Non-octave transposing instruments are supported by the data model
   (`writtenKeyFifths`) but none is defined or tested.
 
