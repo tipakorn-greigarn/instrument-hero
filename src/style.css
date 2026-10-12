@@ -1,0 +1,533 @@
+:root {
+  --bg: #efebe2;
+  --panel: #faf8f3;
+  --ink: #1f1d1a;
+  --muted: #6d675d;
+  --line: #d8d1c2;
+  --accent: #b4441c;
+  --accent-ink: #fff;
+  --paper: #fffdf7;
+  --perfect: #15803d;
+  --ok: #b45309;
+  --wrong: #dc2626;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --panel: #212327;
+    --ink: #ece8df;
+    --muted: #a09a8e;
+    --line: #383a40;
+    --accent: #e8703f;
+    --accent-ink: #16171a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.masthead {
+  padding: 20px 16px 4px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.masthead h1 {
+  margin: 0;
+  font: 700 28px/1.1 Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.01em;
+}
+
+.masthead p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 16px 48px;
+  display: grid;
+  gap: 12px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.setup,
+.audio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 14px;
+  align-items: end;
+}
+
+.audio-grid {
+  margin-top: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+.field.wide {
+  grid-column: span 2;
+}
+
+.field > span {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.field output {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+
+select,
+input[type='number'] {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+.toggles {
+  display: grid;
+  gap: 2px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+summary .muted {
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+button {
+  font: inherit;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  padding: 7px 14px;
+  cursor: pointer;
+  color: inherit;
+  background: var(--bg);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 17px;
+  padding: 12px 28px;
+  min-width: 120px;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.meter {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  align-self: center;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--perfect);
+}
+
+.meter-gate {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.6;
+}
+
+.transport {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.readout {
+  flex: 1;
+  min-width: 240px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.pitch {
+  display: grid;
+  gap: 4px;
+  width: 96px;
+}
+
+.pitch-name {
+  font: 700 26px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  text-align: center;
+}
+
+.tuner {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.tuner-center {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--muted);
+}
+
+.tuner-needle {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tuner-needle.in-tune {
+  background: var(--perfect);
+}
+
+.status {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.tally {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The sheet is always dark ink on light paper, in both color schemes. */
+.paper {
+  background: var(--paper);
+  color: #1f1d1a;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 6px 10px;
+}
+
+.paper .muted {
+  color: #6d675d;
+}
+
+.paper-head {
+  padding: 0 12px;
+}
+
+.paper-head h2 {
+  margin: 0;
+  font: 700 20px/1.2 Georgia, 'Times New Roman', serif;
+}
+
+.paper-head p {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.sheet {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheet svg {
+  display: block;
+}
+
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  height: 100px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.75;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Feedback lanes under each staff: one cell per note in each lane. */
+.lane-label {
+  position: absolute;
+  left: 8px;
+  height: 24px;
+  margin-top: -12px;
+  font-size: 10px;
+  line-height: 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8375;
+}
+
+.cell {
+  position: absolute;
+  width: 30px;
+  height: 24px;
+  margin: -12px 0 0 -15px;
+  font: 700 12px/24px system-ui, sans-serif;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cell::before {
+  content: '';
+  position: absolute;
+  background: #b9b2a3;
+}
+
+.cell.timing::before {
+  left: 50%;
+  top: 3px;
+  bottom: 3px;
+  width: 1px;
+}
+
+.cell.pitch::before {
+  top: 50%;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+}
+
+/* The marker bar; its length and direction are set per note. */
+.cell i {
+  display: none;
+  position: absolute;
+  border-radius: 4px;
+  background: currentColor;
+}
+
+.cell.timing i {
+  top: 8px;
+  height: 8px;
+}
+
+.cell.pitch i {
+  left: 11px;
+  width: 8px;
+}
+
+.cell.marked i {
+  display: block;
+}
+
+.cell.text::before,
+.cell.marked.text i {
+  display: none;
+}
+
+.is-good {
+  color: var(--perfect);
+}
+.is-near {
+  color: var(--ok);
+}
+.is-off,
+.is-bad {
+  color: var(--wrong);
+}
+.is-none {
+  color: #8a8375;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 6px 12px 0;
+  font-size: 12px;
+  color: #6d675d;
+}
+
+.legend div {
+  display: flex;
+  gap: 6px;
+}
+
+.legend dt {
+  font-weight: 700;
+  color: #1f1d1a;
+}
+
+.legend dd {
+  margin: 0;
+}
+
+.fb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+  margin: 2px 0 0;
+}
+
+.fb div {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.fb dt {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fb dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 8px 24px;
+  align-items: start;
+}
+
+.results .overall {
+  grid-row: span 2;
+  text-align: center;
+}
+
+.results .grade {
+  font: 700 72px/1 Georgia, 'Times New Roman', serif;
+  color: var(--accent);
+}
+
+.results .score {
+  font-weight: 700;
+}
+
+.results h3 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.results .pct {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.results p {
+  margin: 0;
+}
+
+.results .detail {
+  color: var(--muted);
+}
+
+.results .focus {
+  grid-column: 2 / -1;
+  font-weight: 600;
+}
+
+.results button {
+  margin-top: 4px;
+}
+
+@media (max-width: 560px) {
+  .readout {
+    grid-template-columns: auto 1fr;
+  }
+  .tally {
+    grid-column: span 2;
+    text-align: left;
+  }
+  .field.wide {
+    grid-column: span 1;
+  }
+  .results {
+    grid-template-columns: 1fr;
+  }
+  .results .overall {
+    grid-row: auto;
+  }
+  .results .focus {
+    grid-column: 1;
+  }
+}

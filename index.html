@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instrument Hero</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <h1>Instrument Hero</h1>
+      <p>Read the staff, play along, get graded on pitch and timing.</p>
+    </header>
+
+    <main>
+      <section class="panel setup" aria-label="Song setup">
+        <label class="field wide">
+          <span>Song</span>
+          <select id="song"></select>
+        </label>
+        <label class="field">
+          <span>Instrument</span>
+          <select id="instrument"></select>
+        </label>
+        <label class="field">
+          <span>Key</span>
+          <select id="key"></select>
+        </label>
+        <label class="field">
+          <span>Range (sounding)</span>
+          <select id="octave"></select>
+        </label>
+        <label class="field tempo">
+          <span>Tempo <output id="bpm-value"></output></span>
+          <input id="bpm" type="range" min="40" max="200" step="1" />
+        </label>
+        <label class="field">
+          <span>Difficulty</span>
+          <select id="difficulty"></select>
+        </label>
+        <div class="toggles">
+          <label><input id="metronome" type="checkbox" /> Metronome</label>
+          <label><input id="guide" type="checkbox" /> Guide melody</label>
+        </div>
+        <p id="difficulty-hint" class="hint muted"></p>
+      </section>
+
+      <details class="panel audio" id="audio-panel" open>
+        <summary>Audio input <span id="input-status" class="muted"></span></summary>
+        <div class="audio-grid">
+          <label class="field wide">
+            <span>Input device</span>
+            <select id="device"></select>
+          </label>
+          <label class="field">
+            <span>Channel</span>
+            <select id="channel">
+              <option value="mix">Both (mixed)</option>
+              <option value="left">Input 1 (left)</option>
+              <option value="right">Input 2 (right)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Latency offset (ms)</span>
+            <input id="latency" type="number" min="-200" max="500" step="5" />
+          </label>
+          <label class="field">
+            <span>Noise gate <output id="gate-value"></output></span>
+            <input id="gate" type="range" min="-70" max="-20" step="1" />
+          </label>
+          <button id="connect" type="button" class="secondary">Connect input</button>
+          <div class="meter" aria-label="Input level">
+            <div class="meter-fill" id="meter-fill"></div>
+            <div class="meter-gate" id="meter-gate"></div>
+          </div>
+        </div>
+      </details>
+
+      <section class="transport" aria-label="Transport">
+        <button id="start" type="button" class="primary">Start</button>
+        <div class="readout">
+          <div class="pitch">
+            <span id="pitch-name" class="pitch-name">--</span>
+            <div class="tuner" aria-hidden="true">
+              <div class="tuner-center"></div>
+              <div class="tuner-needle" id="tuner-needle" hidden></div>
+            </div>
+          </div>
+          <div class="feedback">
+            <div id="status" class="status" role="status">Pick a song and press Start.</div>
+            <dl class="fb">
+              <div>
+                <dt>Timing</dt>
+                <dd id="fb-timing">-</dd>
+              </div>
+              <div>
+                <dt>Pitch</dt>
+                <dd id="fb-pitch">-</dd>
+              </div>
+            </dl>
+          </div>
+          <div id="tally" class="tally"></div>
+        </div>
+      </section>
+
+      <section class="paper">
+        <div class="paper-head">
+          <h2 id="sheet-title"></h2>
+          <p id="sheet-sub" class="muted"></p>
+        </div>
+        <div id="sheet" class="sheet"></div>
+        <dl class="legend">
+          <div>
+            <dt>Timing</dt>
+            <dd>Bar reaching left of the tick: early. Right: late. A dot on the tick: on time.</dd>
+          </div>
+          <div>
+            <dt>Pitch</dt>
+            <dd>Bar reaching above the line: sharp. Below: flat. A red note name is the note you played instead.</dd>
+          </div>
+          <div>
+            <dt>x</dt>
+            <dd>No note was played.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel results" id="results" hidden aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
