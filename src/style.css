@@ -8,10 +8,8 @@
   --accent-ink: #fff;
   --paper: #fffdf7;
   --perfect: #15803d;
-  --good: #0e7490;
   --ok: #b45309;
   --wrong: #dc2626;
-  --miss: #9333ea;
   color-scheme: light dark;
 }
 
@@ -327,88 +325,171 @@ summary:focus-visible {
   will-change: transform;
 }
 
-.sheet .is-perfect path {
-  fill: var(--perfect);
-  stroke: var(--perfect);
+/* Feedback lanes under each staff: one cell per note in each lane. */
+.lane-label {
+  position: absolute;
+  left: 8px;
+  height: 24px;
+  margin-top: -12px;
+  font-size: 10px;
+  line-height: 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8375;
 }
-.sheet .is-good path {
-  fill: var(--good);
-  stroke: var(--good);
+
+.cell {
+  position: absolute;
+  width: 30px;
+  height: 24px;
+  margin: -12px 0 0 -15px;
+  font: 700 12px/24px system-ui, sans-serif;
+  text-align: center;
+  white-space: nowrap;
 }
-.sheet .is-ok path {
-  fill: var(--ok);
-  stroke: var(--ok);
+
+.cell::before {
+  content: '';
+  position: absolute;
+  background: #b9b2a3;
 }
-.sheet .is-wrong path {
-  fill: var(--wrong);
-  stroke: var(--wrong);
+
+.cell.timing::before {
+  left: 50%;
+  top: 3px;
+  bottom: 3px;
+  width: 1px;
 }
-.sheet .is-miss path {
-  fill: var(--miss);
-  stroke: var(--miss);
+
+.cell.pitch::before {
+  top: 50%;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+}
+
+/* The marker bar; its length and direction are set per note. */
+.cell i {
+  display: none;
+  position: absolute;
+  border-radius: 4px;
+  background: currentColor;
+}
+
+.cell.timing i {
+  top: 8px;
+  height: 8px;
+}
+
+.cell.pitch i {
+  left: 11px;
+  width: 8px;
+}
+
+.cell.marked i {
+  display: block;
+}
+
+.cell.text::before,
+.cell.marked.text i {
+  display: none;
+}
+
+.is-good {
+  color: var(--perfect);
+}
+.is-near {
+  color: var(--ok);
+}
+.is-off,
+.is-bad {
+  color: var(--wrong);
+}
+.is-none {
+  color: #8a8375;
 }
 
 .legend {
-  list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 4px 12px 0;
-  padding: 0;
+  gap: 4px 20px;
+  margin: 6px 12px 0;
   font-size: 12px;
+  color: #6d675d;
 }
 
-.legend li::before {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 5px;
-  background: currentColor;
-  transform: rotate(-20deg);
+.legend div {
+  display: flex;
+  gap: 6px;
 }
 
-.legend .is-perfect {
-  color: var(--perfect);
+.legend dt {
+  font-weight: 700;
+  color: #1f1d1a;
 }
-.legend .is-good {
-  color: var(--good);
+
+.legend dd {
+  margin: 0;
 }
-.legend .is-ok {
-  color: var(--ok);
+
+.fb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+  margin: 2px 0 0;
 }
-.legend .is-wrong {
-  color: var(--wrong);
+
+.fb div {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
 }
-.legend .is-miss {
-  color: var(--miss);
+
+.fb dt {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fb dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .results {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 20px;
-  align-items: center;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 8px 24px;
+  align-items: start;
 }
 
-.results .grade {
-  grid-row: span 3;
-  font: 700 72px/1 Georgia, 'Times New Roman', serif;
-  color: var(--accent);
-  min-width: 70px;
+.results .overall {
+  grid-row: span 2;
   text-align: center;
 }
 
+.results .grade {
+  font: 700 72px/1 Georgia, 'Times New Roman', serif;
+  color: var(--accent);
+}
+
 .results .score {
-  font-size: 20px;
   font-weight: 700;
 }
 
-.results .counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
+.results h3 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.results .pct {
+  font-size: 24px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -416,12 +497,17 @@ summary:focus-visible {
   margin: 0;
 }
 
-.results .notes {
+.results .detail {
   color: var(--muted);
 }
 
+.results .focus {
+  grid-column: 2 / -1;
+  font-weight: 600;
+}
+
 .results button {
-  margin-left: 8px;
+  margin-top: 4px;
 }
 
 @media (max-width: 560px) {
@@ -434,5 +520,14 @@ summary:focus-visible {
   }
   .field.wide {
     grid-column: span 1;
+  }
+  .results {
+    grid-template-columns: 1fr;
+  }
+  .results .overall {
+    grid-row: auto;
+  }
+  .results .focus {
+    grid-column: 1;
   }
 }

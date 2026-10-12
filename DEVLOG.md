@@ -53,3 +53,30 @@ punished unfairly.
 
 Verified: 39 tests pass (6 new for difficulty); browser self-test on Hard
 scored 100% with the simulated player.
+
+## 2026-10-12 - Separate timing and pitch feedback (v0.3.0)
+
+User feedback: the single color per notehead did not say what to improve.
+
+- Noteheads are no longer colored. Two lanes under each staff carry one marker
+  per note: timing (bar left of the tick is early, right is late) and pitch
+  (bar above the line is sharp, below is flat, a red note name is the wrong
+  note that was played). Markers are HTML elements positioned over the SVG.
+- Wrong notes now carry their timing too, so a wrong note played on time shows
+  good timing and bad pitch.
+- The live readout next to Start is split into Timing and Pitch.
+- The result panel shows a timing percentage (average timing score of the
+  notes with the right pitch) and a pitch percentage (share of notes with the
+  right pitch), early and late counts, and one line of advice on what to
+  focus on. The overall score formula is unchanged.
+- Added a second simulated input, "Simulated player with mistakes", with a
+  fixed pattern of early, late, out-of-tune, wrong, and skipped notes. It
+  doubles as a demo of the feedback and as the way to check the error
+  markers without a microphone.
+- First attempt used 8 px dots displaced from the tick; too subtle on screen,
+  and a CSS specificity slip hid the wrong-note names. Replaced with bars that
+  grow from the tick.
+- README rewritten for a public audience; screenshot in docs/.
+
+Verified: 41 tests pass; browser run with the sloppy simulated player showed
+early, late, sharp, wrong-note, and skipped markers as expected.

@@ -5,7 +5,7 @@ import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music
 import { INSTRUMENTS, instrumentById } from './music/instruments';
 import { SONGS, barQuarters, songById } from './music/songs';
 import { KEYS, keyById, midiName } from './music/theory';
-import { SIMULATED, loadBest, loadSettings, saveBest, saveSettings } from './storage';
+import { SIMULATED, SIMULATED_SLOPPY, loadBest, loadSettings, saveBest, saveSettings } from './storage';
 import { SheetView } from './ui/sheet';
 
 interface Run {
@@ -52,6 +52,8 @@ const ui = {
   pitchName: el('pitch-name'),
   needle: el('tuner-needle'),
   status: el('status'),
+  fbTiming: el('fb-timing'),
+  fbPitch: el('fb-pitch'),
   tally: el('tally'),
   sheetTitle: el('sheet-title'),
   sheetSub: el('sheet-sub'),
@@ -70,6 +72,7 @@ let run: Run | null = null;
 let starting = false;
 /** Results shown on the sheet, kept so they survive a re-render. */
 let shown: (NoteResult | null)[] = [];
+let shownTargets: Target[] = [];
 
 // ---------------------------------------------------------------- setup
 
@@ -121,7 +124,7 @@ function refresh(): void {
 
 function redrawSheet(): void {
   sheet.render(arrangement);
-  shown.forEach((result, i) => result && sheet.mark(i, result.verdict));
+  shown.forEach((result, i) => result && sheet.mark(i, result, shownTargets[i], prefersFlats()));
 }
 
 function gateLevel(): number {
@@ -147,7 +150,7 @@ function updateGateDisplay(): void {
 // ---------------------------------------------------------------- audio input
 
 function isSimulated(): boolean {
-  return settings.device === SIMULATED;
+  return settings.device === SIMULATED || settings.device === SIMULATED_SLOPPY;
 }
 
 async function populateDevices(): Promise<void> {
@@ -159,6 +162,7 @@ async function populateDevices(): Promise<void> {
     }
   });
   options.push({ value: SIMULATED, label: 'Simulated player (self-test)' });
+  options.push({ value: SIMULATED_SLOPPY, label: 'Simulated player with mistakes (self-test)' });
   if (!options.some((o) => o.value === settings.device)) settings.device = '';
   fillSelect(ui.device, options, settings.device);
 }
@@ -220,6 +224,16 @@ async function connectFromUi(): Promise<void> {
 
 // ---------------------------------------------------------------- playing
 
+/** A fixed pattern of early, late, out-of-tune, wrong, and skipped notes for the sloppy simulated player. */
+function withMistakes(targets: Target[]): Target[] {
+  const shifts = [0, 0.06, -0.07, 0, 0.13, 0, -0.03, 0.02];
+  return targets.flatMap((target, i) => {
+    if (i % 11 === 9) return [];
+    const midi = i % 7 === 5 ? target.midi + 2 : i % 5 === 2 ? target.midi + 0.3 : target.midi;
+    return [{ ...target, time: Math.max(0, target.time + shifts[i % shifts.length]), midi }];
+  });
+}
+
 async function start(): Promise<void> {
   if (run || starting) return;
   starting = true;
@@ -259,8 +273,9 @@ async function start(): Promise<void> {
     midi: n.midi!,
   }));
   if (simulated || settings.guide) {
+    const played = settings.device === SIMULATED_SLOPPY ? withMistakes(targets) : targets;
     engine.playNotes(
-      targets.map((t) => ({ ...t, time: t.time + songStart })),
+      played.map((t) => ({ ...t, time: t.time + songStart })),
       { audible: 0.5, analyzed: simulated },
     );
   }
@@ -270,7 +285,9 @@ async function start(): Promise<void> {
   const latency = simulated ? 0 : engine.outputLatency + engine.inputLatency + settings.latencyMs / 1000;
   tracker = makeTracker();
   shown = targets.map(() => null);
+  shownTargets = targets;
   sheet.clearMarks();
+  setFeedback(null);
   ui.results.hidden = true;
   run = {
     songStart,
@@ -300,34 +317,50 @@ function stop(): void {
   ui.status.textContent = 'Stopped.';
 }
 
-function describeResult(result: NoteResult, target: Target): string {
-  const ms = result.dt !== undefined ? Math.round(Math.abs(result.dt) * 1000) : 0;
-  switch (result.verdict) {
-    case 'perfect':
-      return 'Perfect';
-    case 'good':
-      return `Good, ${ms} ms ${result.dt! > 0 ? 'late' : 'early'}`;
-    case 'ok':
-      return `${result.dt! > 0 ? 'Late' : 'Early'} by ${ms} ms`;
-    case 'wrong':
-      return `Wrong note: ${midiName(result.playedMidi!, prefersFlats())} instead of ${midiName(target.midi, prefersFlats())}`;
-    case 'miss':
-      return 'Missed';
+const TIMING_CLASS = { perfect: 'is-good', good: 'is-near', ok: 'is-off' } as const;
+
+/** Show the latest note's timing and pitch as two separate readouts. */
+function setFeedback(result: NoteResult | null, target?: Target): void {
+  let timing = '-';
+  let pitch = '-';
+  let timingClass = '';
+  let pitchClass = '';
+  if (result?.verdict === 'miss') {
+    timing = 'No note played';
+    timingClass = 'is-none';
+  } else if (result && target) {
+    const ms = Math.round(result.dt! * 1000);
+    timing = result.timing === 'perfect' ? `On time (${ms >= 0 ? '+' : ''}${ms} ms)` : `${Math.abs(ms)} ms ${ms > 0 ? 'late' : 'early'}`;
+    timingClass = TIMING_CLASS[result.timing!];
+    if (result.verdict === 'wrong') {
+      const played = result.playedMidi!;
+      pitch = `${midiName(played, prefersFlats())} played, ${midiName(target.midi, prefersFlats())} expected`;
+      pitchClass = 'is-bad';
+    } else {
+      const cents = Math.round(result.cents!);
+      pitch = Math.abs(cents) <= 15 ? 'Correct' : `Correct, ${Math.abs(cents)} cents ${cents > 0 ? 'sharp' : 'flat'}`;
+      pitchClass = Math.abs(cents) <= 15 ? 'is-good' : 'is-near';
+    }
   }
+  ui.fbTiming.textContent = timing;
+  ui.fbTiming.className = timingClass;
+  ui.fbPitch.textContent = pitch;
+  ui.fbPitch.className = pitchClass;
 }
 
 function applyResults(current: Run, indices: number[]): void {
   for (const i of indices) {
     const result = current.grader.results[i]!;
+    const target = current.grader.targets[i];
     shown[i] = result;
-    sheet.mark(i, result.verdict);
+    sheet.mark(i, result, target, prefersFlats());
     if (result.verdict === 'wrong' || result.verdict === 'miss') {
       current.streak = 0;
     } else {
       current.hits++;
       current.streak++;
     }
-    ui.status.textContent = describeResult(result, current.grader.targets[i]);
+    setFeedback(result, target);
   }
   if (indices.length) {
     ui.tally.textContent = `${current.hits} / ${current.grader.targets.length} hit · streak ${current.streak}`;
@@ -343,6 +376,7 @@ function updateRun(current: Run, activeTracker: NoteTracker): void {
     ui.status.textContent = count >= 1 ? `Count in: ${count}` : 'Get ready';
     sheet.setCursor(0, true);
   } else {
+    ui.status.textContent = 'Playing';
     sheet.setCursor(Math.min(visual / current.secPerQuarter, arrangement.totalQuarters), true);
   }
   applyResults(current, current.grader.update(activeTracker.events, current.offset, engine.now - current.offset));
@@ -372,36 +406,57 @@ function finish(current: Run, activeTracker: NoteTracker): void {
   showResults(summary, isBest);
 }
 
+function block(title: string, pct: number | null, ...lines: (string | HTMLElement)[]): HTMLElement {
+  const section = document.createElement('div');
+  const heading = Object.assign(document.createElement('h3'), { textContent: title });
+  const value = Object.assign(document.createElement('p'), {
+    className: 'pct',
+    textContent: pct === null ? '-' : `${Math.round(pct)}%`,
+  });
+  section.append(heading, value);
+  for (const line of lines) {
+    const p = document.createElement('p');
+    p.className = 'detail';
+    p.append(line);
+    section.append(p);
+  }
+  return section;
+}
+
+/** One sentence on what to work on next, from whichever of pitch and timing is weaker. */
+function focusAdvice(summary: Summary): string {
+  const { counts, pitchPct, timingPct, early, late, meanDtMs } = summary;
+  if (timingPct === null) return 'No notes were detected. Check the input device, channel, and level meter.';
+  if (pitchPct >= 99.5 && timingPct >= 99.5) return 'Clean run. Raise the tempo or the difficulty.';
+  if (pitchPct < timingPct) {
+    return counts.miss > counts.wrong
+      ? 'Focus on pitch: notes were skipped. Slow the tempo until every note sounds.'
+      : 'Focus on pitch: wrong notes were played. Check the red note names against the staff.';
+  }
+  const direction = Math.abs(late - early) <= 1 ? 'both early and late' : late > early ? 'late' : 'early';
+  const drift = meanDtMs !== null && Math.abs(meanDtMs) >= 15 ? `, ${Math.abs(Math.round(meanDtMs))} ms on average` : '';
+  return `Focus on timing: the off notes were ${direction}${drift}.`;
+}
+
 function showResults(summary: Summary, isBest: boolean): void {
   const { counts } = summary;
-  const grade = document.createElement('div');
-  grade.className = 'grade';
-  grade.textContent = summary.grade;
+  const overall = document.createElement('div');
+  overall.className = 'overall';
+  overall.append(
+    Object.assign(document.createElement('div'), { className: 'grade', textContent: summary.grade }),
+    Object.assign(document.createElement('p'), {
+      className: 'score',
+      textContent: `${Math.round(summary.score)}% on ${difficultyById(settings.difficulty).name}`,
+    }),
+  );
+  if (isBest) overall.append(Object.assign(document.createElement('p'), { className: 'detail', textContent: 'New best' }));
 
-  const score = document.createElement('p');
-  score.className = 'score';
-  score.textContent = `${Math.round(summary.score)}% on ${difficultyById(settings.difficulty).name}${isBest ? ' - new best' : ''}`;
-
-  const tally = document.createElement('p');
-  tally.className = 'counts';
-  const parts: [string, number][] = [
-    ['Perfect', counts.perfect],
-    ['Good', counts.good],
-    ['Early or late', counts.ok],
-    ['Wrong note', counts.wrong],
-    ['Missed', counts.miss],
+  const timingLines: (string | HTMLElement)[] = [
+    `On time ${counts.perfect} · Early ${summary.early} · Late ${summary.late}`,
   ];
-  tally.append(...parts.map(([label, n]) => Object.assign(document.createElement('span'), { textContent: `${label}: ${n}` })));
-
-  const notes = document.createElement('p');
-  notes.className = 'notes';
-  if (summary.meanDtMs === null) {
-    notes.textContent = 'No notes were detected. Check the input device, channel, and level meter.';
-  } else {
+  if (summary.meanDtMs !== null) {
     const mean = Math.round(summary.meanDtMs);
-    const timing =
-      Math.abs(mean) < 15 ? 'Timing was centered on the beat.' : `On average ${Math.abs(mean)} ms ${mean > 0 ? 'late' : 'early'}.`;
-    notes.textContent = `${timing} Average pitch error ${Math.round(summary.meanAbsCents!)} cents.`;
+    timingLines.push(Math.abs(mean) < 15 ? 'Centered on the beat on average.' : `${Math.abs(mean)} ms ${mean > 0 ? 'late' : 'early'} on average.`);
     if (!isSimulated() && Math.abs(mean) >= 20 && counts.perfect + counts.good + counts.ok >= 5) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -413,11 +468,20 @@ function showResults(summary: Summary, isBest: boolean): void {
         saveSettings(settings);
         button.remove();
       });
-      notes.append(button);
+      timingLines.push(button);
     }
   }
 
-  ui.results.replaceChildren(grade, score, tally, notes);
+  const pitchLines = [`Correct ${counts.perfect + counts.good + counts.ok} · Wrong ${counts.wrong} · Not played ${counts.miss}`];
+  if (summary.meanAbsCents !== null) pitchLines.push(`${Math.round(summary.meanAbsCents)} cents off on average.`);
+
+  const focus = Object.assign(document.createElement('p'), { className: 'focus', textContent: focusAdvice(summary) });
+  ui.results.replaceChildren(
+    overall,
+    block('Timing', summary.timingPct, ...timingLines),
+    block('Pitch', summary.pitchPct, ...pitchLines),
+    focus,
+  );
   ui.results.hidden = false;
   ui.sheetSub.textContent = ui.sheetSub.textContent!.replace(/[^·]*$/, ` ${describeBest()}`);
 }

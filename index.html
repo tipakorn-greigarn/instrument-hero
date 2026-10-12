@@ -86,7 +86,19 @@
               <div class="tuner-needle" id="tuner-needle" hidden></div>
             </div>
           </div>
-          <div id="status" class="status" role="status">Pick a song and press Start.</div>
+          <div class="feedback">
+            <div id="status" class="status" role="status">Pick a song and press Start.</div>
+            <dl class="fb">
+              <div>
+                <dt>Timing</dt>
+                <dd id="fb-timing">-</dd>
+              </div>
+              <div>
+                <dt>Pitch</dt>
+                <dd id="fb-pitch">-</dd>
+              </div>
+            </dl>
+          </div>
           <div id="tally" class="tally"></div>
         </div>
       </section>
@@ -97,13 +109,20 @@
           <p id="sheet-sub" class="muted"></p>
         </div>
         <div id="sheet" class="sheet"></div>
-        <ul class="legend" aria-label="Note colors">
-          <li class="is-perfect">Perfect</li>
-          <li class="is-good">Good</li>
-          <li class="is-ok">Early or late</li>
-          <li class="is-wrong">Wrong note</li>
-          <li class="is-miss">Missed</li>
-        </ul>
+        <dl class="legend">
+          <div>
+            <dt>Timing</dt>
+            <dd>Bar reaching left of the tick: early. Right: late. A dot on the tick: on time.</dd>
+          </div>
+          <div>
+            <dt>Pitch</dt>
+            <dd>Bar reaching above the line: sharp. Below: flat. A red note name is the note you played instead.</dd>
+          </div>
+          <div>
+            <dt>x</dt>
+            <dd>No note was played.</dd>
+          </div>
+        </dl>
       </section>
 
       <section class="panel results" id="results" hidden aria-live="polite"></section>

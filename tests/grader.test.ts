@@ -45,6 +45,9 @@ describe('Grader', () => {
     expect(summary.results.map((r) => r.verdict)).toEqual(['good', 'ok', 'wrong', 'miss']);
     expect(summary.results[0].dt).toBeCloseTo(0.07);
     expect(summary.results[2].playedMidi).toBe(66);
+    expect(summary.results[2].dt).toBeCloseTo(0);
+    expect(summary.results[2].timing).toBe('perfect');
+    expect(summary.results[3].timing).toBeUndefined();
   });
 
   it('does not count the right note in the wrong octave', () => {
@@ -82,6 +85,28 @@ describe('Grader', () => {
     expect(gradeLetter(90)).toBe('A');
     expect(gradeLetter(80)).toBe('B');
     expect(gradeLetter(40)).toBe('F');
+  });
+});
+
+describe('timing and pitch breakdown', () => {
+  it('reports pitch and timing separately', () => {
+    // Right notes, but two early and one late; then one wrong note played on time.
+    const events = [event(-0.07, 60), event(0.43, 62), event(1.12, 64), event(1.5, 70)];
+    const summary = new Grader(targets).finalize(events, heldFrames(events, 2.2), 0);
+    expect(summary.pitchPct).toBeCloseTo(75);
+    expect(summary.timingPct).toBeCloseTo((100 * (0.8 + 0.8 + 0.5)) / 3);
+    expect(summary.early).toBe(2);
+    expect(summary.late).toBe(1);
+  });
+
+  it('gives full marks to both for a clean run and none without notes', () => {
+    const events = targets.map((t) => event(t.time, t.midi));
+    const clean = new Grader(targets).finalize(events, heldFrames(events, 2.2), 0);
+    expect(clean.pitchPct).toBe(100);
+    expect(clean.timingPct).toBe(100);
+    const silent = new Grader(targets).finalize([], [], 0);
+    expect(silent.pitchPct).toBe(0);
+    expect(silent.timingPct).toBeNull();
   });
 });
 

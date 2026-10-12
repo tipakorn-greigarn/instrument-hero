@@ -39,3 +39,25 @@ Browser, simulated player: Row, Row, Row Your Boat, guitar, F# major, Hard:
 changes with the selected level. No console errors.
 
 Not run: real instrument, as before.
+
+# Test report - v0.3.0, separate timing and pitch feedback (2026-10-12)
+
+Automated: 3 files, 41 tests, all passed. New cases: wrong notes carry their
+own timing; pitch percentage, timing percentage, and early/late counts in the
+summary; clean and silent runs.
+
+Browser, "Simulated player with mistakes", Hot Cross Buns, bass 4, C, Normal,
+1100 px wide:
+
+| Check | Result |
+| --- | --- |
+| Timing lane: on-time dot, early bar to the left, late bar to the right | Pass |
+| Pitch lane: in-tune dot, sharp bar above the line | Pass |
+| Wrong notes show the played note name in red (C#, D, E) with their own timing | Pass |
+| Skipped note shows x in the timing lane and nothing in the pitch lane | Pass |
+| Tooltips give ms and cents ("123 ms late", "Played D2, expected C2 (too high)") | Pass |
+| Live readout shows Timing and Pitch separately | Pass ("On time (+3 ms)" / "D2 played, C2 expected") |
+| Result panel: Timing 93%, Pitch 76%, counts, advice "Focus on pitch..." | Pass |
+| Console errors | None |
+
+Not run: real instrument; narrow viewport with the new lanes.
