@@ -187,3 +187,7 @@ The difficulty levels are plain data in `DIFFICULTIES` in `src/game/grader.ts`.
 
 Notation by [VexFlow](https://github.com/0xfe/vexflow) (MIT). The tunes are
 traditional and in the public domain.
+
+## License
+
+[MIT](LICENSE)

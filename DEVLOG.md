@@ -80,3 +80,8 @@ User feedback: the single color per notehead did not say what to improve.
 
 Verified: 41 tests pass; browser run with the sloppy simulated player showed
 early, late, sharp, wrong-note, and skipped markers as expected.
+
+## 2026-10-12 - License
+
+Added the MIT License at the owner's request (LICENSE, README section,
+package.json field).
