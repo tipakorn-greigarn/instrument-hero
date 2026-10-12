@@ -38,16 +38,81 @@ export interface Summary {
   results: NoteResult[];
 }
 
-export const PERFECT_SECONDS = 0.045;
-export const GOOD_SECONDS = 0.09;
-/** Pitch tolerance in semitones. */
-const PITCH_TOLERANCE = 0.5;
+/** Scoring rules for one difficulty level. */
+export interface Difficulty {
+  id: string;
+  name: string;
+  /** One-line description shown in the UI. */
+  summary: string;
+  /** Timing error limits in seconds for Perfect and Good. */
+  perfect: number;
+  good: number;
+  /** Longest a note's hit window may reach to either side, in seconds. */
+  maxWindow: number;
+  /** Pitch tolerance in semitones. */
+  pitchTolerance: number;
+  /** Accept the right note name in any octave. */
+  anyOctave: boolean;
+  /** Timing score (0-1) for Good and for Early or Late. Perfect is always 1. */
+  goodScore: number;
+  okScore: number;
+  /** Share of the note score that comes from timing; the rest is sustain. */
+  timingWeight: number;
+  /** Fraction of the written length a note must ring to count as fully held. */
+  holdFraction: number;
+}
+
+export const DIFFICULTIES: Difficulty[] = [
+  {
+    id: 'easy',
+    name: 'Easy',
+    summary: 'Wide timing windows, any octave counts, note length is not scored.',
+    perfect: 0.08,
+    good: 0.15,
+    maxWindow: 0.35,
+    pitchTolerance: 0.5,
+    anyOctave: true,
+    goodScore: 0.9,
+    okScore: 0.7,
+    timingWeight: 1,
+    holdFraction: 0.5,
+  },
+  {
+    id: 'normal',
+    name: 'Normal',
+    summary: 'Perfect within 45 ms, exact octave, 20% of the score for holding notes.',
+    perfect: 0.045,
+    good: 0.09,
+    maxWindow: 0.25,
+    pitchTolerance: 0.5,
+    anyOctave: false,
+    goodScore: 0.8,
+    okScore: 0.5,
+    timingWeight: 0.8,
+    holdFraction: 0.5,
+  },
+  {
+    id: 'hard',
+    name: 'Hard',
+    summary: 'Perfect within 30 ms, pitch within 30 cents, 30% of the score for holding notes for most of their length.',
+    perfect: 0.03,
+    good: 0.06,
+    maxWindow: 0.15,
+    pitchTolerance: 0.3,
+    anyOctave: false,
+    goodScore: 0.7,
+    okScore: 0.3,
+    timingWeight: 0.7,
+    holdFraction: 0.8,
+  },
+];
+
+export function difficultyById(id: string): Difficulty {
+  return DIFFICULTIES.find((d) => d.id === id) ?? DIFFICULTIES[1];
+}
+
 /** How long after a note's window closes before it is declared missed. */
 const SETTLE_SECONDS = 0.3;
-/** Fraction of the written length a note must ring to count as fully held. */
-const HOLD_FRACTION = 0.5;
-const TIMING_WEIGHT = 0.8;
-const TIMING_SCORE: Record<Verdict, number> = { perfect: 1, good: 0.8, ok: 0.5, wrong: 0, miss: 0 };
 
 export function gradeLetter(score: number): string {
   if (score >= 95) return 'S';
@@ -64,15 +129,30 @@ export class Grader {
   private readonly matched: (NoteEvent | null)[];
   private readonly used = new Set<NoteEvent>();
 
-  constructor(readonly targets: Target[]) {
+  constructor(
+    readonly targets: Target[],
+    private readonly rules: Difficulty = difficultyById('normal'),
+  ) {
     this.results = targets.map(() => null);
     this.matched = targets.map(() => null);
     // Each note owns the time up to halfway to its neighbors.
     this.tolerance = targets.map((target, i) => {
       const before = i > 0 ? target.time - targets[i - 1].time : Infinity;
       const after = i < targets.length - 1 ? targets[i + 1].time - target.time : Infinity;
-      return Math.min(0.25, Math.max(0.06, 0.5 * Math.min(before, after)));
+      return Math.min(rules.maxWindow, Math.max(0.06, 0.5 * Math.min(before, after)));
     });
+  }
+
+  /** Pitch error in semitones; folded into one octave when any octave is accepted. */
+  private pitchError(played: number, expected: number): number {
+    const diff = played - expected;
+    return this.rules.anyOctave ? diff - 12 * Math.round(diff / 12) : diff;
+  }
+
+  private timingScore(verdict: Verdict): number {
+    if (verdict === 'perfect') return 1;
+    if (verdict === 'good') return this.rules.goodScore;
+    return verdict === 'ok' ? this.rules.okScore : 0;
   }
 
   /**
@@ -94,7 +174,7 @@ export class Grader {
         if (!event.resolved || event.midi === null || this.used.has(event)) continue;
         const dt = event.t - offset - target.time;
         if (Math.abs(dt) > tol) continue;
-        const correct = Math.abs(event.midi - target.midi) <= PITCH_TOLERANCE;
+        const correct = Math.abs(this.pitchError(event.midi, target.midi)) <= this.rules.pitchTolerance;
         const current = correct ? hit : other;
         if (!current || Math.abs(dt) < Math.abs(current.t - offset - target.time)) {
           if (correct) hit = event;
@@ -105,15 +185,15 @@ export class Grader {
       if (hit) {
         const dt = hit.t - offset - target.time;
         const abs = Math.abs(dt);
-        const verdict: Verdict = abs <= PERFECT_SECONDS ? 'perfect' : abs <= GOOD_SECONDS ? 'good' : 'ok';
+        const verdict: Verdict = abs <= this.rules.perfect ? 'perfect' : abs <= this.rules.good ? 'good' : 'ok';
         this.used.add(hit);
         this.matched[i] = hit;
         this.results[i] = {
           verdict,
           dt,
-          cents: (hit.midi! - target.midi) * 100,
+          cents: this.pitchError(hit.midi!, target.midi) * 100,
           sustain: 1,
-          score: TIMING_SCORE[verdict],
+          score: this.timingScore(verdict),
         };
         resolved.push(i);
       } else if (now > target.time + tol + SETTLE_SECONDS) {
@@ -142,7 +222,8 @@ export class Grader {
       const event = this.matched[i];
       if (event) {
         r.sustain = this.sustain(this.targets[i], event.t - offset, frames, offset);
-        r.score = TIMING_WEIGHT * TIMING_SCORE[r.verdict] + (1 - TIMING_WEIGHT) * r.sustain;
+        const weight = this.rules.timingWeight;
+        r.score = weight * this.timingScore(r.verdict) + (1 - weight) * r.sustain;
         dtSum += r.dt!;
         centsSum += Math.abs(r.cents!);
         hits++;
@@ -164,7 +245,7 @@ export class Grader {
 
   /** How long the right pitch kept sounding after the attack, relative to the required hold. */
   private sustain(target: Target, attack: number, frames: Frame[], offset: number): number {
-    const need = HOLD_FRACTION * target.dur;
+    const need = this.rules.holdFraction * target.dur;
     const end = target.time + target.dur + 0.1;
     let last = attack;
     let seen = false;
@@ -172,7 +253,8 @@ export class Grader {
       const t = frame.t - offset;
       if (t < attack) continue;
       if (t > end) break;
-      const correct = frame.midi !== null && Math.abs(frame.midi - target.midi) <= PITCH_TOLERANCE;
+      const correct =
+        frame.midi !== null && Math.abs(this.pitchError(frame.midi, target.midi)) <= this.rules.pitchTolerance;
       if (correct) {
         last = t;
         seen = true;

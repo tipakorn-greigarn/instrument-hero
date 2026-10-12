@@ -14,6 +14,7 @@ timing.
   than one fits. Guitar and bass are written an octave above where they sound,
   as is conventional.
 - Tempo from 40 to 200 bpm, optional metronome, optional guide melody.
+- Three difficulty levels (Easy, Normal, Hard) that change how notes are scored.
 - Input device and channel selection for audio interfaces, with a level meter
   and noise gate. Browser voice processing (echo cancellation, noise
   suppression, auto gain) is switched off.
@@ -71,13 +72,29 @@ microphone, so the app does not hear its own output.
 
 ## How grading works
 
-- Each note has a time window reaching halfway to its neighbors (at most 250 ms).
-- A note is a hit when an attack with the right pitch (within 50 cents, right
-  octave) falls in its window. Timing within 45 ms is Perfect, within 90 ms is
-  Good, otherwise Early or Late.
+- Each note has a time window reaching halfway to its neighbors, capped by the
+  difficulty level.
+- A note is a hit when an attack with the right pitch falls in its window. The
+  timing error decides between Perfect, Good, and Early or Late.
 - An attack with another pitch in the window is a Wrong note; no attack is a Miss.
-- The note score is 80% timing and 20% sustain (holding the pitch for at least
-  half the written length). The song score is the average over all notes.
+- The note score combines timing with sustain (holding the pitch for the
+  required part of the written length). The song score is the average over all
+  notes.
+
+Difficulty changes the numbers:
+
+| | Easy | Normal | Hard |
+| --- | --- | --- | --- |
+| Perfect within | 80 ms | 45 ms | 30 ms |
+| Good within | 150 ms | 90 ms | 60 ms |
+| Hit window cap | 350 ms | 250 ms | 150 ms |
+| Pitch tolerance | 50 cents, any octave | 50 cents | 30 cents |
+| Timing score: Good / Early or late | 90% / 70% | 80% / 50% | 70% / 30% |
+| Sustain share of note score | none | 20% | 30% |
+| Required hold | - | half the note | 80% of the note |
+
+Best scores are kept separately per difficulty. The levels are defined in
+`DIFFICULTIES` in `src/game/grader.ts`.
 
 ## Project layout
 
