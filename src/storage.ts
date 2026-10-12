@@ -9,6 +9,7 @@ export interface Settings {
   /** Octave shift, null to use the default placement. */
   octave: number | null;
   bpm: number;
+  difficulty: string;
   metronome: boolean;
   guide: boolean;
   /** Input device id, or SIMULATED. */
@@ -39,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   key: 'C',
   octave: null,
   bpm: 80,
+  difficulty: 'normal',
   metronome: true,
   guide: false,
   device: '',
@@ -72,20 +74,22 @@ export function saveSettings(settings: Settings): void {
   write(SETTINGS_KEY, settings);
 }
 
-function bestId(song: string, instrument: string): string {
-  return `${song}|${instrument}`;
+/** Best scores are kept per difficulty. Normal keeps the original, shorter key. */
+function bestId(song: string, instrument: string, difficulty: string): string {
+  return difficulty === 'normal' ? `${song}|${instrument}` : `${song}|${instrument}|${difficulty}`;
 }
 
-export function loadBest(song: string, instrument: string): BestScore | null {
-  return read<Record<string, BestScore>>(BEST_KEY, {})[bestId(song, instrument)] ?? null;
+export function loadBest(song: string, instrument: string, difficulty: string): BestScore | null {
+  return read<Record<string, BestScore>>(BEST_KEY, {})[bestId(song, instrument, difficulty)] ?? null;
 }
 
 /** Records the score if it beats the stored best. Returns true for a new best. */
-export function saveBest(song: string, instrument: string, best: BestScore): boolean {
+export function saveBest(song: string, instrument: string, difficulty: string, best: BestScore): boolean {
   const all = read<Record<string, BestScore>>(BEST_KEY, {});
-  const previous = all[bestId(song, instrument)];
+  const id = bestId(song, instrument, difficulty);
+  const previous = all[id];
   if (previous && previous.score >= best.score) return false;
-  all[bestId(song, instrument)] = best;
+  all[id] = best;
   write(BEST_KEY, all);
   return true;
 }

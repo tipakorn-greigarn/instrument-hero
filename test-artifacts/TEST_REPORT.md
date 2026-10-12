@@ -25,3 +25,17 @@ Real instrument through an audio interface. The browser pane used for testing
 blocks microphone access, and no instrument was available to the test. The
 wrong-note and missed-note colors were therefore exercised only through the
 grader unit tests, not on screen.
+
+# Test report - v0.2.0, difficulty levels (2026-10-12)
+
+Automated: 3 files, 39 tests, all passed. New cases: same timing graded
+Perfect on Easy, Good on Normal, Early or late on Hard; octave-off notes hit
+only on Easy; 40 cents sharp is a hit on Normal and wrong on Hard; sustain
+weight 0 / 20 / 30%; narrower hit window on Hard; unknown level falls back to
+Normal.
+
+Browser, simulated player: Row, Row, Row Your Boat, guitar, F# major, Hard:
+27 / 27 Perfect, "100% on Hard". The rule summary under the setup panel
+changes with the selected level. No console errors.
+
+Not run: real instrument, as before.

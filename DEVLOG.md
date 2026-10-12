@@ -37,3 +37,19 @@ Verified: 33 unit and end-to-end tests pass; browser self-test with the
 simulated player scored 100% on two songs; production image builds and serves.
 Not verified: a real instrument through a real audio interface. See
 test-artifacts/TEST_REPORT.md.
+
+## 2026-10-12 - Difficulty levels (v0.2.0)
+
+Added Easy, Normal, and Hard. A level is a set of scoring rules passed to the
+grader (`Difficulty` in `src/game/grader.ts`): timing limits, hit window cap,
+pitch tolerance, whether any octave counts, timing scores for non-perfect
+hits, and the sustain weight and required hold. Normal is the previous
+behavior unchanged. Best scores are stored per level; Normal keeps the old
+storage key so existing bests carry over.
+
+Considered and left out: penalizing extra notes on Hard. Attack detection has
+not been checked against a real instrument yet, and false attacks would be
+punished unfairly.
+
+Verified: 39 tests pass (6 new for difficulty); browser self-test on Hard
+scored 100% with the simulated player.

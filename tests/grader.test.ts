@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Grader, gradeLetter, type Target } from '../src/game/grader';
+import { Grader, difficultyById, gradeLetter, type Target } from '../src/game/grader';
 import type { Frame, NoteEvent } from '../src/game/tracker';
 import { arrange, defaultOctave, octaveOptions } from '../src/music/arrange';
 import { instrumentById } from '../src/music/instruments';
@@ -82,6 +82,50 @@ describe('Grader', () => {
     expect(gradeLetter(90)).toBe('A');
     expect(gradeLetter(80)).toBe('B');
     expect(gradeLetter(40)).toBe('F');
+  });
+});
+
+describe('difficulty', () => {
+  const play = (level: string, events: NoteEvent[], frames: Frame[] = heldFrames(events, 2.2)) =>
+    new Grader(targets, difficultyById(level)).finalize(events, frames, 0);
+
+  it('grades the same timing more strictly at higher levels', () => {
+    const events = targets.map((t) => event(t.time + 0.07, t.midi));
+    expect(play('easy', events).counts.perfect).toBe(4);
+    expect(play('normal', events).counts.good).toBe(4);
+    expect(play('hard', events).counts.ok).toBe(4);
+    const scores = ['easy', 'normal', 'hard'].map((level) => play(level, events).score);
+    expect(scores[0]).toBeGreaterThan(scores[1]);
+    expect(scores[1]).toBeGreaterThan(scores[2]);
+  });
+
+  it('accepts any octave only on easy', () => {
+    const events = targets.map((t) => event(t.time, t.midi - 12));
+    expect(play('easy', events).counts.perfect).toBe(4);
+    expect(play('normal', events).counts.wrong).toBe(4);
+  });
+
+  it('requires tighter intonation on hard', () => {
+    const events = targets.map((t) => event(t.time, t.midi + 0.4));
+    expect(play('normal', events).counts.perfect).toBe(4);
+    expect(play('hard', events).counts.wrong).toBe(4);
+  });
+
+  it('ignores note length on easy and weighs it most on hard', () => {
+    const events = targets.map((t) => event(t.time, t.midi));
+    expect(play('easy', events, []).score).toBeCloseTo(100);
+    expect(play('normal', events, []).score).toBeCloseTo(80);
+    expect(play('hard', events, []).score).toBeCloseTo(70);
+  });
+
+  it('narrows the hit window on hard', () => {
+    const events = [event(0.2, 60)];
+    expect(play('normal', events).results[0].verdict).toBe('ok');
+    expect(play('hard', events).results[0].verdict).toBe('miss');
+  });
+
+  it('falls back to normal for an unknown level', () => {
+    expect(difficultyById('nope').id).toBe('normal');
   });
 });
 

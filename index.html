@@ -34,10 +34,15 @@
           <span>Tempo <output id="bpm-value"></output></span>
           <input id="bpm" type="range" min="40" max="200" step="1" />
         </label>
+        <label class="field">
+          <span>Difficulty</span>
+          <select id="difficulty"></select>
+        </label>
         <div class="toggles">
           <label><input id="metronome" type="checkbox" /> Metronome</label>
           <label><input id="guide" type="checkbox" /> Guide melody</label>
         </div>
+        <p id="difficulty-hint" class="hint muted"></p>
       </section>
 
       <details class="panel audio" id="audio-panel" open>

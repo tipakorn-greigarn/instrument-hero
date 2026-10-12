@@ -1,5 +1,5 @@
 import { AudioEngine, type Channel } from './audio/engine';
-import { Grader, type NoteResult, type Summary, type Target } from './game/grader';
+import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, type Target } from './game/grader';
 import { NoteTracker } from './game/tracker';
 import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
@@ -35,6 +35,8 @@ const ui = {
   octave: el<HTMLSelectElement>('octave'),
   bpm: el<HTMLInputElement>('bpm'),
   bpmValue: el<HTMLOutputElement>('bpm-value'),
+  difficulty: el<HTMLSelectElement>('difficulty'),
+  difficultyHint: el('difficulty-hint'),
   metronome: el<HTMLInputElement>('metronome'),
   guide: el<HTMLInputElement>('guide'),
   device: el<HTMLSelectElement>('device'),
@@ -81,9 +83,10 @@ function prefersFlats(): boolean {
 }
 
 function describeBest(): string {
-  const best = loadBest(settings.song, settings.instrument);
-  if (!best) return 'No score yet';
-  return `Best: ${best.grade} (${Math.round(best.score)}%) at ${best.bpm} bpm in ${best.key}`;
+  const best = loadBest(settings.song, settings.instrument, settings.difficulty);
+  const level = difficultyById(settings.difficulty).name;
+  if (!best) return `No ${level} score yet`;
+  return `Best on ${level}: ${best.grade} (${Math.round(best.score)}%) at ${best.bpm} bpm in ${best.key}`;
 }
 
 /** Rebuild the arrangement from the settings and redraw the sheet. */
@@ -108,6 +111,7 @@ function refresh(): void {
   arrangement = arrange(song, key, instrument, settings.octave);
   shown = [];
   ui.bpmValue.textContent = `${settings.bpm} bpm`;
+  ui.difficultyHint.textContent = difficultyById(settings.difficulty).summary;
   ui.sheetTitle.textContent = song.title;
   const transposing = instrument.soundsBelowWritten === 12 ? ', sounds one octave below written' : '';
   ui.sheetSub.textContent = `${key.name} · ${instrument.name}${transposing} · ${describeBest()}`;
@@ -275,7 +279,7 @@ async function start(): Promise<void> {
     total,
     offset: songStart + latency,
     visualDelay: simulated ? 0 : engine.outputLatency,
-    grader: new Grader(targets),
+    grader: new Grader(targets, difficultyById(settings.difficulty)),
     hits: 0,
     streak: 0,
   };
@@ -358,7 +362,7 @@ function finish(current: Run, activeTracker: NoteTracker): void {
 
   const isBest =
     !isSimulated() &&
-    saveBest(settings.song, settings.instrument, {
+    saveBest(settings.song, settings.instrument, settings.difficulty, {
       score: summary.score,
       grade: summary.grade,
       bpm: settings.bpm,
@@ -376,7 +380,7 @@ function showResults(summary: Summary, isBest: boolean): void {
 
   const score = document.createElement('p');
   score.className = 'score';
-  score.textContent = `${Math.round(summary.score)}%${isBest ? ' - new best' : ''}`;
+  score.textContent = `${Math.round(summary.score)}% on ${difficultyById(settings.difficulty).name}${isBest ? ' - new best' : ''}`;
 
   const tally = document.createElement('p');
   tally.className = 'counts';
@@ -464,6 +468,7 @@ function init(): void {
   fillSelect(ui.song, SONGS.map((s) => ({ value: s.id, label: s.title })), settings.song);
   fillSelect(ui.instrument, INSTRUMENTS.map((i) => ({ value: i.id, label: i.name })), settings.instrument);
   fillSelect(ui.key, KEYS.map((k) => ({ value: k.id, label: k.name })), settings.key);
+  fillSelect(ui.difficulty, DIFFICULTIES.map((d) => ({ value: d.id, label: d.name })), difficultyById(settings.difficulty).id);
   ui.bpm.value = String(settings.bpm);
   ui.metronome.checked = settings.metronome;
   ui.guide.checked = settings.guide;
@@ -502,6 +507,7 @@ function init(): void {
     ui.bpmValue.textContent = `${settings.bpm} bpm`;
     saveSettings(settings);
   });
+  ui.difficulty.addEventListener('change', onSetting(() => (settings.difficulty = ui.difficulty.value)));
   ui.metronome.addEventListener('change', onSetting(() => (settings.metronome = ui.metronome.checked)));
   ui.guide.addEventListener('change', onSetting(() => (settings.guide = ui.guide.checked)));
 
