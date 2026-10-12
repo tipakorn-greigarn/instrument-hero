@@ -3,7 +3,7 @@ import { PitchDetector } from '../src/audio/pitch';
 import { NoteTracker } from '../src/game/tracker';
 import { INSTRUMENTS } from '../src/music/instruments';
 import { freqToMidi, midiToFreq } from '../src/music/theory';
-import { renderNotes, runTracker } from './helpers';
+import { renderNotes, runTracker, type SynthNote } from './helpers';
 
 function tone(freq: number, sampleRate: number, size: number, harmonics: number[]): Float32Array {
   const out = new Float32Array(size);
@@ -40,7 +40,7 @@ describe('NoteTracker', () => {
   for (const sampleRate of [44100, 48000, 96000]) {
     for (const instrument of INSTRUMENTS) {
       it(`finds every note across the ${instrument.name} range at ${sampleRate} Hz`, () => {
-        const notes = [];
+        const notes: SynthNote[] = [];
         for (let midi = instrument.low, i = 0; midi <= instrument.high; midi += 3, i++) {
           notes.push({ time: 0.3 + i * 0.5, dur: 0.5, midi });
         }
