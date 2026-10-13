@@ -3,9 +3,9 @@ import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, ty
 import { NoteTracker } from './game/tracker';
 import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
-import { SONGS, barQuarters, songById } from './music/songs';
+import { barQuarters, songById, songsByGroup } from './music/songs';
 import { KEYS, keyById, midiName } from './music/theory';
-import { SIMULATED, SIMULATED_SLOPPY, loadBest, loadSettings, saveBest, saveSettings } from './storage';
+import { MAX_BPM, MIN_BPM, SIMULATED, SIMULATED_SLOPPY, loadBest, loadSettings, saveBest, saveSettings } from './storage';
 import { SheetView } from './ui/sheet';
 
 interface Run {
@@ -34,7 +34,7 @@ const ui = {
   key: el<HTMLSelectElement>('key'),
   octave: el<HTMLSelectElement>('octave'),
   bpm: el<HTMLInputElement>('bpm'),
-  bpmValue: el<HTMLOutputElement>('bpm-value'),
+  bpmNumber: el<HTMLInputElement>('bpm-number'),
   difficulty: el<HTMLSelectElement>('difficulty'),
   difficultyHint: el('difficulty-hint'),
   metronome: el<HTMLInputElement>('metronome'),
@@ -81,6 +81,27 @@ function fillSelect(select: HTMLSelectElement, options: { value: string; label: 
   select.value = value;
 }
 
+/** The song menu, with one labeled section per collection. */
+function fillSongs(): void {
+  ui.song.replaceChildren(
+    ...songsByGroup().map(({ group, songs }) => {
+      const section = document.createElement('optgroup');
+      section.label = group;
+      section.append(...songs.map((s) => new Option(s.title, s.id)));
+      return section;
+    }),
+  );
+  ui.song.value = songById(settings.song).id;
+}
+
+/** Set the tempo from either control, keeping the slider and the number box in step. */
+function setBpm(value: number): void {
+  const bpm = Math.round(value);
+  settings.bpm = Number.isFinite(bpm) ? Math.max(MIN_BPM, Math.min(MAX_BPM, bpm)) : settings.bpm;
+  ui.bpm.value = String(settings.bpm);
+  ui.bpmNumber.value = String(settings.bpm);
+}
+
 function prefersFlats(): boolean {
   return keyById(settings.key).fifths < 0;
 }
@@ -113,7 +134,6 @@ function refresh(): void {
 
   arrangement = arrange(song, key, instrument, settings.octave);
   shown = [];
-  ui.bpmValue.textContent = `${settings.bpm} bpm`;
   ui.difficultyHint.textContent = difficultyById(settings.difficulty).summary;
   ui.sheetTitle.textContent = song.title;
   const transposing = instrument.soundsBelowWritten === 12 ? ', sounds one octave below written' : '';
@@ -529,11 +549,15 @@ function onSetting(apply: () => void): () => void {
 }
 
 function init(): void {
-  fillSelect(ui.song, SONGS.map((s) => ({ value: s.id, label: s.title })), settings.song);
+  fillSongs();
   fillSelect(ui.instrument, INSTRUMENTS.map((i) => ({ value: i.id, label: i.name })), settings.instrument);
   fillSelect(ui.key, KEYS.map((k) => ({ value: k.id, label: k.name })), settings.key);
   fillSelect(ui.difficulty, DIFFICULTIES.map((d) => ({ value: d.id, label: d.name })), difficultyById(settings.difficulty).id);
-  ui.bpm.value = String(settings.bpm);
+  for (const input of [ui.bpm, ui.bpmNumber]) {
+    input.min = String(MIN_BPM);
+    input.max = String(MAX_BPM);
+  }
+  setBpm(settings.bpm);
   ui.metronome.checked = settings.metronome;
   ui.guide.checked = settings.guide;
   ui.channel.value = settings.channel;
@@ -544,9 +568,8 @@ function init(): void {
     'change',
     onSetting(() => {
       settings.song = ui.song.value;
-      settings.bpm = songById(settings.song).bpm;
+      setBpm(songById(settings.song).bpm);
       settings.octave = null;
-      ui.bpm.value = String(settings.bpm);
     }),
   );
   ui.instrument.addEventListener(
@@ -565,12 +588,16 @@ function init(): void {
     }),
   );
   ui.octave.addEventListener('change', onSetting(() => (settings.octave = Number(ui.octave.value))));
-  ui.bpm.addEventListener('input', () => {
+  // The slider applies while dragging; the number box applies on Enter or
+  // when focus leaves it, so a half-typed value is never clamped.
+  const onBpm = (input: HTMLInputElement) => () => {
     stop();
-    settings.bpm = Number(ui.bpm.value);
-    ui.bpmValue.textContent = `${settings.bpm} bpm`;
+    // An emptied box keeps the current tempo.
+    setBpm(input.value.trim() === '' ? settings.bpm : Number(input.value));
     saveSettings(settings);
-  });
+  };
+  ui.bpm.addEventListener('input', onBpm(ui.bpm));
+  ui.bpmNumber.addEventListener('change', onBpm(ui.bpmNumber));
   ui.difficulty.addEventListener('change', onSetting(() => (settings.difficulty = ui.difficulty.value)));
   ui.metronome.addEventListener('change', onSetting(() => (settings.metronome = ui.metronome.checked)));
   ui.guide.addEventListener('change', onSetting(() => (settings.guide = ui.guide.checked)));

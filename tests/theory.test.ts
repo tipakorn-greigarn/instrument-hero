@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { arrange, defaultOctave, octaveOptions } from '../src/music/arrange';
 import { INSTRUMENTS, instrumentById } from '../src/music/instruments';
-import { SONGS, barQuarters, songById } from '../src/music/songs';
+import { GROUPS, SONGS, barQuarters, songById, songsByGroup } from '../src/music/songs';
 import { KEYS, keyById, parsePitch, pitchName, pitchToMidi, transposeFromC } from '../src/music/theory';
 
 describe('theory', () => {
@@ -43,6 +43,12 @@ describe('songs', () => {
         expect(total, `${song.id} bar ${i + 1}`).toBeCloseTo(barQuarters(song));
       });
     }
+  });
+
+  it('puts every song in exactly one known collection', () => {
+    for (const song of SONGS) expect(GROUPS, song.id).toContain(song.group);
+    const listed = songsByGroup().flatMap((g) => g.songs.map((s) => s.id));
+    expect(listed.sort()).toEqual(SONGS.map((s) => s.id).sort());
   });
 
   it('has unique ids', () => {

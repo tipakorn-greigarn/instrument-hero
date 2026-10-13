@@ -61,3 +61,19 @@ Browser, "Simulated player with mistakes", Hot Cross Buns, bass 4, C, Normal,
 | Console errors | None |
 
 Not run: real instrument; narrow viewport with the new lanes.
+
+# Test report - v0.4.0, song collections and typed tempo (2026-10-13)
+
+Automated: 3 files, 42 tests, all passed.
+
+Browser (dev server):
+
+| Check | Result |
+| --- | --- |
+| Song menu has sections Warm-ups (1), Nursery rhymes (9), Classical and holiday (2) | Pass |
+| Typing 137 in the tempo box sets slider and saved tempo to 137 | Pass |
+| 999 clamps to 240; 5 clamps to 30; 92.6 rounds to 93 | Pass |
+| Emptying the box keeps the current tempo | Pass (after fix; first version fell to 30) |
+| Dragging the slider updates the box | Pass |
+| Changing song loads its default tempo into both controls | Pass |
+| Console errors | None |

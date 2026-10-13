@@ -29,6 +29,9 @@ export interface BestScore {
   date: string;
 }
 
+export const MIN_BPM = 30;
+export const MAX_BPM = 240;
+
 export const SIMULATED = 'simulated';
 /** A simulated player that makes deliberate mistakes, to show what feedback looks like. */
 export const SIMULATED_SLOPPY = 'simulated-sloppy';

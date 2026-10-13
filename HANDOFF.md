@@ -1,7 +1,7 @@
 # HANDOFF
 
-State as of 2026-10-12: v0.3.0 (first request, difficulty levels, separate
-timing and pitch feedback). Gitflow: work on `develop`, releases merged to
+State as of 2026-10-13: v0.4.0 on `develop` (adds song collections and typed
+tempo; not yet released to `main`). v0.3.0 is the latest release. Gitflow: work on `develop`, releases merged to
 `main` and tagged. Remote: https://github.com/tipakorn-greigarn/instrument-hero
 
 ## What works
@@ -11,7 +11,7 @@ timing and pitch feedback). Gitflow: work on `develop`, releases merged to
   per-note timing and pitch lanes under the staff; result summary with
   separate timing and pitch percentages; best scores and settings in
   localStorage.
-- Automated tests (41) and browser self-tests with the two simulated players
+- Automated tests (42) and browser self-tests with the two simulated players
   (a clean one and one that makes deliberate mistakes).
 
 ## Not yet verified
@@ -37,6 +37,7 @@ timing and pitch feedback). Gitflow: work on `develop`, releases merged to
 
 ## Ideas for next steps
 
+- User-made playlists on top of the fixed collections, if the library grows.
 - Calibrate latency with a dedicated clap/pluck-on-the-click routine.
 - Practice mode that waits for the right note before moving on.
 - Loop a range of bars; slow-down trainer that raises tempo after a good run.
