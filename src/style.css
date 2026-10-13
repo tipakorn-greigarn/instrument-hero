@@ -104,7 +104,8 @@ main {
   grid-column: span 2;
 }
 
-.field > span {
+.field > span,
+.field > label > span {
   font-size: 12px;
   color: var(--muted);
   text-transform: uppercase;
@@ -126,6 +127,17 @@ input[type='number'] {
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 6px 8px;
+}
+
+.tempo-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tempo-row input[type='number'] {
+  width: 72px;
+  flex: none;
 }
 
 input[type='range'] {

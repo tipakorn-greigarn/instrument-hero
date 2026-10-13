@@ -14,7 +14,8 @@ there is no account or server-side storage.
 
 - **Standard notation.** Real staff, clef, key signature, and time signature,
   so you practice reading as well as playing.
-- **Twelve beginner tunes**: Twinkle Twinkle Little Star, Mary Had a Little
+- **Twelve beginner tunes in collections** (warm-ups, nursery rhymes,
+  classical and holiday): Twinkle Twinkle Little Star, Mary Had a Little
   Lamb, Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale
   warm-up, and more.
 - **Any major key**, with correct spelling of every note.
@@ -22,8 +23,8 @@ there is no account or server-side storage.
   octave that fits the instrument, and you can choose another when more than
   one fits. Guitar and bass are written an octave above where they sound, as
   in published music.
-- **Tempo from 40 to 200 bpm**, metronome, count-in, and an optional guide
-  melody.
+- **Tempo from 30 to 240 bpm**, set with a slider or typed in exactly, plus
+  metronome, count-in, and an optional guide melody.
 - **Separate timing and pitch feedback** for every note, right under the
   staff, plus a summary that tells you which of the two to work on.
 - **Three difficulty levels** that change how strictly you are scored.
@@ -168,7 +169,8 @@ tests/         unit and end-to-end tests on synthesized audio
 ### Adding a song
 
 Append an entry to `DEFS` in `src/music/songs.ts`. Write it in C major; the
-notation is described at the top of that file. The tests check that every bar
+notation is described at the top of that file. Give it a `group`: one of the
+collections in `GROUPS`, or add a new name there to start a new collection. The tests check that every bar
 is full and that the song fits every instrument in every key.
 
 ### Adding an instrument

@@ -85,3 +85,22 @@ early, late, sharp, wrong-note, and skipped markers as expected.
 
 Added the MIT License at the owner's request (LICENSE, README section,
 package.json field).
+
+## 2026-10-13 - Song collections and typed tempo (v0.4.0)
+
+- Songs are organized into collections. Chose fixed collections over
+  user-made playlists: each song has one `group`, the song menu shows a
+  labeled section per collection (`GROUPS` sets the order). Playlists need an
+  editor, ordering, and storage for a library of a dozen songs; they can be
+  layered on later without changing this. "Album" was rejected as a name
+  because it implies a published release.
+- Tempo can be typed into a number box next to the slider. Range widened from
+  40-200 to 30-240 bpm. The slider applies while dragging; the box applies on
+  Enter or blur, rounds to a whole number, clamps to the range, and keeps the
+  current tempo if emptied.
+
+Verified: 42 tests pass (1 new: every song is in exactly one known
+collection). Browser: three sections in the song menu (1 / 9 / 2 songs);
+typing 137, 999, 5, an empty value, and 92.6 gave 137, 240, 30, unchanged,
+and 93, with slider and saved setting in step; changing song loads its
+default tempo into both controls.

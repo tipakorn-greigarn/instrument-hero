@@ -5,12 +5,17 @@
 //   C4      quarter note (default duration)
 //   G4:h    explicit duration: w h q e s, with a trailing "." for dotted
 //   r:q     rest
+//
+// Each song belongs to one collection. Collections are listed in GROUPS, in
+// the order they appear in the song menu.
 
 import { parsePitch, type Pitch } from './theory';
 
 export interface SongDef {
   id: string;
   title: string;
+  /** Collection the song is listed under; one of GROUPS. */
+  group: string;
   /** Time signature as [beats, beat value]. */
   time: [number, number];
   /** Length of one metronome beat in quarter notes (1.5 in 6/8). */
@@ -63,10 +68,13 @@ export function parseNotation(notation: string): SongNote[][] {
     );
 }
 
+export const GROUPS = ['Warm-ups', 'Nursery rhymes', 'Classical and holiday'];
+
 const DEFS: SongDef[] = [
   {
     id: 'scale',
     title: 'Major Scale (warm-up)',
+    group: 'Warm-ups',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 70,
@@ -75,6 +83,7 @@ const DEFS: SongDef[] = [
   {
     id: 'hot-cross-buns',
     title: 'Hot Cross Buns',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 80,
@@ -84,6 +93,7 @@ const DEFS: SongDef[] = [
   {
     id: 'mary',
     title: 'Mary Had a Little Lamb',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 90,
@@ -94,6 +104,7 @@ const DEFS: SongDef[] = [
   {
     id: 'twinkle',
     title: 'Twinkle, Twinkle, Little Star',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 90,
@@ -105,6 +116,7 @@ const DEFS: SongDef[] = [
   {
     id: 'baa-baa',
     title: 'Baa, Baa, Black Sheep',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 85,
@@ -113,6 +125,7 @@ const DEFS: SongDef[] = [
   {
     id: 'lightly-row',
     title: 'Lightly Row',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 95,
@@ -123,6 +136,7 @@ const DEFS: SongDef[] = [
   {
     id: 'frere-jacques',
     title: 'Frere Jacques',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 90,
@@ -134,6 +148,7 @@ const DEFS: SongDef[] = [
   {
     id: 'old-macdonald',
     title: 'Old MacDonald Had a Farm',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 95,
@@ -144,6 +159,7 @@ const DEFS: SongDef[] = [
   {
     id: 'london-bridge',
     title: 'London Bridge',
+    group: 'Nursery rhymes',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 95,
@@ -154,6 +170,7 @@ const DEFS: SongDef[] = [
   {
     id: 'ode-to-joy',
     title: 'Ode to Joy',
+    group: 'Classical and holiday',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 95,
@@ -164,6 +181,7 @@ const DEFS: SongDef[] = [
   {
     id: 'jingle-bells',
     title: 'Jingle Bells (chorus)',
+    group: 'Classical and holiday',
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
@@ -174,6 +192,7 @@ const DEFS: SongDef[] = [
   {
     id: 'row-row',
     title: 'Row, Row, Row Your Boat',
+    group: 'Nursery rhymes',
     time: [6, 8],
     beatQuarters: 1.5,
     bpm: 60,
@@ -185,6 +204,13 @@ const DEFS: SongDef[] = [
 ];
 
 export const SONGS: Song[] = DEFS.map((def) => ({ ...def, measures: parseNotation(def.notation) }));
+
+/** Songs by collection, in menu order. Collections without songs are left out. */
+export function songsByGroup(): { group: string; songs: Song[] }[] {
+  return GROUPS.map((group) => ({ group, songs: SONGS.filter((s) => s.group === group) })).filter(
+    (g) => g.songs.length > 0,
+  );
+}
 
 export function songById(id: string): Song {
   return SONGS.find((s) => s.id === id) ?? SONGS[0];

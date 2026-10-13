@@ -30,10 +30,13 @@
           <span>Range (sounding)</span>
           <select id="octave"></select>
         </label>
-        <label class="field tempo">
-          <span>Tempo <output id="bpm-value"></output></span>
-          <input id="bpm" type="range" min="40" max="200" step="1" />
-        </label>
+        <div class="field tempo">
+          <label for="bpm-number"><span>Tempo (bpm)</span></label>
+          <div class="tempo-row">
+            <input id="bpm" type="range" step="1" aria-label="Tempo slider" />
+            <input id="bpm-number" type="number" step="1" inputmode="numeric" />
+          </div>
+        </div>
         <label class="field">
           <span>Difficulty</span>
           <select id="difficulty"></select>
