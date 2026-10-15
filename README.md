@@ -14,10 +14,10 @@ there is no account or server-side storage.
 
 - **Standard notation.** Real staff, clef, key signature, and time signature,
   so you practice reading as well as playing.
-- **Twelve beginner tunes in collections** (warm-ups, nursery rhymes,
-  classical and holiday): Twinkle Twinkle Little Star, Mary Had a Little
-  Lamb, Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale
-  warm-up, and more.
+- **Thirteen tunes in collections** (warm-ups, nursery rhymes, classical
+  and holiday, jazz): Twinkle Twinkle Little Star, Mary Had a Little Lamb,
+  Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale
+  warm-up, a 12-bar jazz blues walking bass line, and more.
 - **Any major key**, with correct spelling of every note.
 - **Guitar and 4-string bass.** Each song is placed in an
   octave that fits the instrument, and you can choose another when more than

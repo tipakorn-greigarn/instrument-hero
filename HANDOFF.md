@@ -1,6 +1,7 @@
 # HANDOFF
 
-State as of 2026-10-15: v0.5.0 on `develop` (adds competition mode with
+State as of 2026-10-15: v0.6.0 on `develop` (adds a jazz blues walking bass
+exercise; v0.5.0 added competition mode with
 per-song top-10 tables, removes the 5-string bass; v0.4.0's song collections
 and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest release. Gitflow: work on `develop`, releases merged to
 `main` and tagged. Remote: https://github.com/tipakorn-greigarn/instrument-hero
@@ -39,6 +40,9 @@ and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest
   (`writtenKeyFifths`) but none is defined or tested.
 
 ## Ideas for next steps
+
+- Chord symbols above the staff, for the walking bass line and future jazz
+  exercises. Needs a field in the song format and VexFlow annotations.
 
 - Competition tables live in one browser only. Sharing them across devices
   needs a server; agreed with the owner to leave this for later.

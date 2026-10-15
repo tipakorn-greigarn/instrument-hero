@@ -104,3 +104,20 @@ restored before the commit.
 | Console errors | None |
 
 Not run: real instrument; Safari and Firefox.
+
+# Test report - v0.6.0, jazz blues walking bass (2026-10-15)
+
+Automated: 4 files, 44 tests, all passed. New: end-to-end grading of the
+walking line on 4-string bass; the existing tests confirm every bar is full
+and the line fits both instruments in all 12 keys.
+
+Browser (dev server):
+
+| Check | Result |
+| --- | --- |
+| Song menu has a Jazz section with one song | Pass |
+| C major, bass: four bars per line, flats only on Eb, Ab, Bb | Pass |
+| Db major: Fb, Cb, and Bbb where the chords call for them, no double sharps | Pass |
+| Console errors | None |
+
+Not run: playing the line on a real bass.
