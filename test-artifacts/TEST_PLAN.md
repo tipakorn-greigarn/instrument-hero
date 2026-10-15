@@ -1,4 +1,4 @@
-# Test plan - v0.1.0
+# Test plan - v0.5.0
 
 ## Automated (vitest, run in Docker)
 
@@ -10,7 +10,8 @@
 | Pitch detector | Pure and harmonic tones (including weak fundamental) from E1 to C6 within 5 cents; silence gives no pitch |
 | Note tracker | Every note across each instrument's range found once with correct pitch and attack time within 30 ms, at 44.1, 48, and 96 kHz; repeated same-pitch notes; legato pitch changes only in legato mode; silence |
 | Grader | Perfect run scores 100; good, late, wrong, and missed verdicts; wrong octave is wrong; time offset; live resolution order; short notes lose sustain points; letter grades |
-| End to end | Four synthesized song performances (bass 4, bass 5, guitar; 4/4 and 6/8) graded with no wrong, missed, or late notes |
+| End to end | Four synthesized song performances (bass 4, guitar; 4/4 and 6/8) graded with no wrong, missed, or late notes |
+| Competition | Tempo levels; points per difficulty and tempo; table ranking with ties; top-10 trimming |
 
 ## Browser (Chromium, dev server, simulated player input)
 
@@ -19,6 +20,10 @@
 3. Row, Row, Row Your Boat, guitar, F# major (6/8, six sharps): same as above.
 4. Narrow viewport (about 430 px): sheet reflows to one bar per line.
 5. Start with a real input device when microphone access is blocked: readable error, no crash.
+6. Competition: fixed controls disabled and showing their values; three tempo levels; points in the result.
+7. Competition save: name box prefilled with the last name and editable; empty name not saved; tie ranks below; full table reports the points needed; simulated runs not entered.
+8. Switching back to Free play restores the free-play key, range, tempo, and guide.
+9. 375 px wide with the score table open: no horizontal page scroll.
 
 ## Production image
 

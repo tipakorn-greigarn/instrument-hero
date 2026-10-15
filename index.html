@@ -14,6 +14,11 @@
 
     <main>
       <section class="panel setup" aria-label="Song setup">
+        <div class="mode-switch wide" role="radiogroup" aria-label="Mode">
+          <label><input type="radio" name="mode" value="free" /> Free play</label>
+          <label><input type="radio" name="mode" value="competition" /> Competition</label>
+        </div>
+        <p id="mode-hint" class="hint muted"></p>
         <label class="field wide">
           <span>Song</span>
           <select id="song"></select>
@@ -31,8 +36,9 @@
           <select id="octave"></select>
         </label>
         <div class="field tempo">
-          <label for="bpm-number"><span>Tempo (bpm)</span></label>
-          <div class="tempo-row">
+          <label for="bpm-number"><span id="tempo-label">Tempo (bpm)</span></label>
+          <div class="tempo-levels" id="tempo-levels" role="radiogroup" aria-label="Tempo level"></div>
+          <div class="tempo-row" id="tempo-row">
             <input id="bpm" type="range" step="1" aria-label="Tempo slider" />
             <input id="bpm-number" type="number" step="1" inputmode="numeric" />
           </div>
@@ -108,8 +114,11 @@
 
       <section class="paper">
         <div class="paper-head">
-          <h2 id="sheet-title"></h2>
-          <p id="sheet-sub" class="muted"></p>
+          <div>
+            <h2 id="sheet-title"></h2>
+            <p id="sheet-sub" class="muted"></p>
+          </div>
+          <button id="show-scores" type="button" class="secondary" aria-controls="scores">High scores</button>
         </div>
         <div id="sheet" class="sheet"></div>
         <dl class="legend">
@@ -129,6 +138,8 @@
       </section>
 
       <section class="panel results" id="results" hidden aria-live="polite"></section>
+
+      <section class="panel scores" id="scores" hidden aria-label="High scores"></section>
     </main>
 
     <script type="module" src="/src/main.ts"></script>

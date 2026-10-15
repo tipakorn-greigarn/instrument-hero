@@ -104,3 +104,46 @@ collection). Browser: three sections in the song menu (1 / 9 / 2 songs);
 typing 137, 999, 5, an empty value, and 92.6 gave 137, 240, 30, unchanged,
 and 93, with slider and saved setting in step; changing song loads its
 default tempo into both controls.
+
+## 2026-10-15 - Competition mode and high scores (v0.5.0)
+
+Agreed with the owner before building:
+
+- Two modes. Free play is the app as it was. Competition fixes settings so
+  scores can be ranked.
+- Competition: key fixed to C major (every song is written in C), range fixed
+  to the instrument's default placement, metronome on, guide melody off (it
+  plays the answer, and a microphone would hear it). Tempo is Slow, Medium,
+  or Fast at 75%, 100%, and 125% of the song's own tempo, relative so slow
+  and quick songs are treated alike. Difficulty stays as implemented. Device,
+  channel, gate, and latency stay open: they are equipment, not skill.
+- One table per song, across instruments, difficulties, and tempos, so the
+  score has to reward harder settings: points = accuracy x 10 x difficulty
+  (0.8 / 1 / 1.25) x tempo (0.8 / 1 / 1.25). Top 10 only; a tie ranks below
+  the existing row.
+- Name box after a qualifying run, prefilled with the last name used and
+  editable; a run that misses the top 10 is not kept.
+- Tables stay in localStorage, as before. Free-play best scores are left as
+  they were and not copied into the competition tables.
+- 5-string bass removed. A saved setting that points at it falls back to the
+  first instrument.
+- The simulated players stay (they are the browser self-test and the demo).
+  They can run in competition but cannot enter the tables.
+
+Implementation: `src/game/competition.ts` has the tempo levels and points;
+`src/storage.ts` has the table (pure `rankFor` and `insertScore`, tested, plus
+load/save). In `main.ts`, `playKey`, `playBpm`, `playMetronome`, and
+`playGuide` return the value in force, so the free-play settings survive a
+switch to competition and back. Fixed controls are disabled and show the
+fixed value.
+
+Found while testing: saved settings can name a song that no longer exists
+(the browser pane had one from an earlier build). The page fell back to the
+first song but the score was filed under the missing id. The song id is now
+normalized at startup, like the instrument. Also, on a phone the score table
+widened the whole page; the panel now has `min-width: 0` and the table
+scrolls inside it.
+
+Verified: typecheck clean; 43 tests pass (4 new for points, tempo, and the
+table; the per-instrument tracker tests drop by 3 with the 5-string bass).
+Browser checks in test-artifacts/TEST_REPORT.md.
