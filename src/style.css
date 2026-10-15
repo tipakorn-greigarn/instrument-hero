@@ -129,6 +129,66 @@ input[type='number'] {
   padding: 6px 8px;
 }
 
+/* Segmented radio groups: the mode switch and the competition tempo levels. */
+.mode-switch,
+.tempo-levels {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.mode-switch {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.mode-switch label,
+.tempo-levels label {
+  flex: 1;
+  padding: 6px 14px;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tempo-levels label {
+  padding: 6px 4px;
+}
+
+.mode-switch label + label,
+.tempo-levels label + label {
+  border-left: 1px solid var(--line);
+}
+
+.mode-switch input,
+.tempo-levels input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-switch label:has(input:checked),
+.tempo-levels label:has(input:checked) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.mode-switch label:has(input:focus-visible),
+.tempo-levels label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+select:disabled,
+input:disabled,
+.toggles label:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .tempo-row {
   display: flex;
   gap: 8px;
@@ -301,6 +361,10 @@ summary:focus-visible {
 }
 
 .paper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
   padding: 0 12px;
 }
 
@@ -520,6 +584,89 @@ summary:focus-visible {
 
 .results button {
   margin-top: 4px;
+}
+
+/* Saving a score, inside the results panel. */
+.results .save {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.results .save form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.results .save input {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 16em;
+  max-width: 100%;
+}
+
+.results .save button {
+  margin-top: 0;
+}
+
+/* A grid item would otherwise grow to the table's width; the table scrolls inside instead. */
+.scores {
+  min-width: 0;
+}
+
+.scores h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.scores p {
+  margin: 0;
+}
+
+.scores-wrap {
+  overflow-x: auto;
+}
+
+.scores table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.scores th,
+.scores td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.scores th {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scores td.num,
+.scores th.num {
+  text-align: right;
+}
+
+.scores tr.is-new td {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-weight: 600;
 }
 
 @media (max-width: 560px) {

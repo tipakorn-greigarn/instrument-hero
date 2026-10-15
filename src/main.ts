@@ -1,11 +1,28 @@
 import { AudioEngine, type Channel } from './audio/engine';
+import { COMPETITION_KEY, TEMPO_LEVELS, competitionBpm, points, tempoLevelById } from './game/competition';
 import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, type Target } from './game/grader';
 import { NoteTracker } from './game/tracker';
 import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
 import { barQuarters, songById, songsByGroup } from './music/songs';
 import { KEYS, keyById, midiName } from './music/theory';
-import { MAX_BPM, MIN_BPM, SIMULATED, SIMULATED_SLOPPY, loadBest, loadSettings, saveBest, saveSettings } from './storage';
+import {
+  HIGH_SCORE_LIMIT,
+  MAX_BPM,
+  MAX_NAME_LENGTH,
+  MIN_BPM,
+  SIMULATED,
+  SIMULATED_SLOPPY,
+  loadBest,
+  loadHighScores,
+  loadSettings,
+  rankFor,
+  saveBest,
+  saveHighScore,
+  saveSettings,
+  type HighScore,
+  type Mode,
+} from './storage';
 import { SheetView } from './ui/sheet';
 
 interface Run {
@@ -29,12 +46,17 @@ function el<T extends HTMLElement>(id: string): T {
 }
 
 const ui = {
+  modes: [...document.querySelectorAll<HTMLInputElement>('input[name="mode"]')],
+  modeHint: el('mode-hint'),
   song: el<HTMLSelectElement>('song'),
   instrument: el<HTMLSelectElement>('instrument'),
   key: el<HTMLSelectElement>('key'),
   octave: el<HTMLSelectElement>('octave'),
   bpm: el<HTMLInputElement>('bpm'),
   bpmNumber: el<HTMLInputElement>('bpm-number'),
+  tempoLabel: el('tempo-label'),
+  tempoLevels: el('tempo-levels'),
+  tempoRow: el('tempo-row'),
   difficulty: el<HTMLSelectElement>('difficulty'),
   difficultyHint: el('difficulty-hint'),
   metronome: el<HTMLInputElement>('metronome'),
@@ -58,6 +80,8 @@ const ui = {
   sheetTitle: el('sheet-title'),
   sheetSub: el('sheet-sub'),
   results: el('results'),
+  showScores: el<HTMLButtonElement>('show-scores'),
+  scores: el('scores'),
 };
 
 const METER_FLOOR_DB = -70;
@@ -73,6 +97,8 @@ let starting = false;
 /** Results shown on the sheet, kept so they survive a re-render. */
 let shown: (NoteResult | null)[] = [];
 let shownTargets: Target[] = [];
+/** Song whose table row was just saved, and its rank, to highlight it. */
+let justSaved: { song: string; rank: number } | null = null;
 
 // ---------------------------------------------------------------- setup
 
@@ -102,42 +128,115 @@ function setBpm(value: number): void {
   ui.bpmNumber.value = String(settings.bpm);
 }
 
+function competing(): boolean {
+  return settings.mode === 'competition';
+}
+
+// Competition fixes the key, range, tempo, metronome, and guide. These give
+// the value in force; the free-play settings are kept for switching back.
+
+function playKey(): string {
+  return competing() ? COMPETITION_KEY : settings.key;
+}
+
+function playBpm(): number {
+  return competing() ? competitionBpm(songById(settings.song).bpm, settings.tempo) : settings.bpm;
+}
+
+function playMetronome(): boolean {
+  return competing() || settings.metronome;
+}
+
+function playGuide(): boolean {
+  return !competing() && settings.guide;
+}
+
 function prefersFlats(): boolean {
-  return keyById(settings.key).fifths < 0;
+  return keyById(playKey()).fifths < 0;
 }
 
 function describeBest(): string {
+  if (competing()) {
+    const top = loadHighScores(settings.song)[0];
+    return top ? `Top score: ${top.points} by ${top.name}` : 'No high scores yet';
+  }
   const best = loadBest(settings.song, settings.instrument, settings.difficulty);
   const level = difficultyById(settings.difficulty).name;
   if (!best) return `No ${level} score yet`;
   return `Best on ${level}: ${best.grade} (${Math.round(best.score)}%) at ${best.bpm} bpm in ${best.key}`;
 }
 
+function describeSheet(): string {
+  const key = keyById(playKey());
+  const instrument = instrumentById(settings.instrument);
+  const transposing = instrument.soundsBelowWritten === 12 ? ', sounds one octave below written' : '';
+  const tempo = competing() ? ` · ${tempoLevelById(settings.tempo).name}, ${playBpm()} bpm` : '';
+  return `${key.name} · ${instrument.name}${transposing}${tempo} · ${describeBest()}`;
+}
+
+/** Show the mode's controls: fixed ones are disabled and show the value in force. */
+function applyMode(): void {
+  const competition = competing();
+  for (const radio of ui.modes) radio.checked = radio.value === settings.mode;
+  ui.modeHint.textContent = competition
+    ? `Key, range, metronome, and guide are fixed; scores are ranked in a top ${HIGH_SCORE_LIMIT} per song.`
+    : 'Every setting is open. Runs are not entered in the high scores.';
+  ui.key.disabled = competition;
+  ui.key.value = playKey();
+  ui.octave.disabled = competition;
+  ui.metronome.disabled = competition;
+  ui.metronome.checked = playMetronome();
+  ui.guide.disabled = competition;
+  ui.guide.checked = playGuide();
+  ui.tempoRow.hidden = competition;
+  ui.tempoLevels.hidden = !competition;
+  ui.tempoLabel.textContent = competition ? 'Tempo' : 'Tempo (bpm)';
+  const songBpm = songById(settings.song).bpm;
+  for (const radio of ui.tempoLevels.querySelectorAll('input')) {
+    radio.checked = radio.value === tempoLevelById(settings.tempo).id;
+    radio.parentElement!.title = `${competitionBpm(songBpm, radio.value)} bpm`;
+  }
+}
+
+function fillTempoLevels(): void {
+  ui.tempoLevels.replaceChildren(
+    ...TEMPO_LEVELS.map((level) => {
+      const label = document.createElement('label');
+      const radio = Object.assign(document.createElement('input'), { type: 'radio', name: 'tempo-level', value: level.id });
+      radio.addEventListener('change', onSetting(() => (settings.tempo = level.id)));
+      label.append(radio, ` ${level.name}`);
+      return label;
+    }),
+  );
+}
+
 /** Rebuild the arrangement from the settings and redraw the sheet. */
 function refresh(): void {
   const song = songById(settings.song);
   const instrument = instrumentById(settings.instrument);
-  const key = keyById(settings.key);
+  const key = keyById(playKey());
 
   const options = octaveOptions(song, key, instrument);
   if (settings.octave === null || !options.some((o) => o.shift === settings.octave)) {
     settings.octave = defaultOctave(options, instrument);
   }
+  const octave = competing() ? defaultOctave(options, instrument) : settings.octave;
   fillSelect(
     ui.octave,
     options.map((o) => ({
       value: String(o.shift),
       label: `${midiName(o.low, prefersFlats())} to ${midiName(o.high, prefersFlats())}${o.fits ? '' : ' (out of range)'}`,
     })),
-    String(settings.octave),
+    String(octave),
   );
 
-  arrangement = arrange(song, key, instrument, settings.octave);
+  arrangement = arrange(song, key, instrument, octave);
   shown = [];
   ui.difficultyHint.textContent = difficultyById(settings.difficulty).summary;
   ui.sheetTitle.textContent = song.title;
-  const transposing = instrument.soundsBelowWritten === 12 ? ', sounds one octave below written' : '';
-  ui.sheetSub.textContent = `${key.name} · ${instrument.name}${transposing} · ${describeBest()}`;
+  ui.sheetSub.textContent = describeSheet();
+  applyMode();
+  if (!ui.scores.hidden) renderScores();
   sheet.render(arrangement);
   saveSettings(settings);
 }
@@ -271,7 +370,7 @@ async function start(): Promise<void> {
 
   const song = arrangement.song;
   const simulated = isSimulated();
-  const secPerQuarter = 60 / settings.bpm / song.beatQuarters;
+  const secPerQuarter = 60 / playBpm() / song.beatQuarters;
   const beat = song.beatQuarters * secPerQuarter;
   const bar = barQuarters(song);
   const countIn = bar * secPerQuarter;
@@ -281,7 +380,7 @@ async function start(): Promise<void> {
   for (let b = 0; b * song.beatQuarters < bar; b++) {
     engine.click(songStart - countIn + b * beat, b === 0, 0.5);
   }
-  if (settings.metronome) {
+  if (playMetronome()) {
     for (let q = 0; q < arrangement.totalQuarters; q += song.beatQuarters) {
       engine.click(songStart + q * secPerQuarter, q % bar === 0, 0.3);
     }
@@ -292,7 +391,7 @@ async function start(): Promise<void> {
     dur: n.quarters * secPerQuarter,
     midi: n.midi!,
   }));
-  if (simulated || settings.guide) {
+  if (simulated || playGuide()) {
     const played = settings.device === SIMULATED_SLOPPY ? withMistakes(targets) : targets;
     engine.playNotes(
       played.map((t) => ({ ...t, time: t.time + songStart })),
@@ -309,6 +408,7 @@ async function start(): Promise<void> {
   sheet.clearMarks();
   setFeedback(null);
   ui.results.hidden = true;
+  justSaved = null;
   run = {
     songStart,
     secPerQuarter,
@@ -414,6 +514,11 @@ function finish(current: Run, activeTracker: NoteTracker): void {
   endRun();
   ui.status.textContent = 'Finished.';
 
+  if (competing()) {
+    showResults(summary, false);
+    ui.results.append(saveForm(summary));
+    return;
+  }
   const isBest =
     !isSimulated() &&
     saveBest(settings.song, settings.instrument, settings.difficulty, {
@@ -424,6 +529,141 @@ function finish(current: Run, activeTracker: NoteTracker): void {
       date: new Date().toISOString(),
     });
   showResults(summary, isBest);
+}
+
+function detail(text: string): HTMLElement {
+  return Object.assign(document.createElement('p'), { className: 'detail', textContent: text });
+}
+
+/** After a competition run: a name box to enter the run in the song's table, if it makes the top ten. */
+function saveForm(summary: Summary): HTMLElement {
+  const box = document.createElement('div');
+  box.className = 'save';
+  const song = settings.song;
+  const row: HighScore = {
+    name: '',
+    points: points(summary.score, settings.difficulty, settings.tempo),
+    score: summary.score,
+    grade: summary.grade,
+    instrument: settings.instrument,
+    difficulty: difficultyById(settings.difficulty).id,
+    tempo: tempoLevelById(settings.tempo).id,
+    date: new Date().toISOString(),
+  };
+  const table = loadHighScores(song);
+  const rank = rankFor(table, row.points);
+  if (isSimulated()) {
+    box.append(detail('Simulated runs are not entered in the high scores.'));
+    return box;
+  }
+  if (rank === null) {
+    box.append(detail(`Not in the top ${HIGH_SCORE_LIMIT}. Number ${HIGH_SCORE_LIMIT} has ${table[HIGH_SCORE_LIMIT - 1].points} points.`));
+    showScores();
+    return box;
+  }
+
+  const form = document.createElement('form');
+  const name = Object.assign(document.createElement('input'), {
+    type: 'text',
+    value: settings.playerName,
+    maxLength: MAX_NAME_LENGTH,
+    required: true,
+    placeholder: 'Your name',
+    autocomplete: 'nickname',
+  });
+  name.setAttribute('aria-label', 'Name for the high score');
+  const save = Object.assign(document.createElement('button'), { type: 'submit', className: 'secondary', textContent: 'Save score' });
+  form.append(detail(`Number ${rank + 1} in the top ${HIGH_SCORE_LIMIT}.`), name, save);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const entered = name.value.trim();
+    if (!entered) {
+      name.value = '';
+      name.reportValidity();
+      return;
+    }
+    settings.playerName = entered;
+    saveSettings(settings);
+    const saved = saveHighScore(song, { ...row, name: entered });
+    box.replaceChildren(
+      detail(saved === null ? `No longer in the top ${HIGH_SCORE_LIMIT}.` : `Saved as number ${saved + 1}.`),
+    );
+    justSaved = saved === null ? null : { song, rank: saved };
+    if (settings.song === song) ui.sheetSub.textContent = describeSheet();
+    showScores();
+  });
+  box.append(form);
+  // Focus without scrolling the results out of view; the name is selected so typing replaces it.
+  requestAnimationFrame(() => {
+    name.focus({ preventScroll: true });
+    name.select();
+  });
+  return box;
+}
+
+// ---------------------------------------------------------------- high scores
+
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
+
+function showScores(): void {
+  ui.scores.hidden = false;
+  ui.showScores.textContent = 'Hide high scores';
+  renderScores();
+}
+
+function hideScores(): void {
+  ui.scores.hidden = true;
+  ui.showScores.textContent = 'High scores';
+}
+
+function renderScores(): void {
+  const song = songById(settings.song);
+  const rows = loadHighScores(song.id);
+  const heading = Object.assign(document.createElement('h3'), { textContent: `High scores: ${song.title}` });
+  if (rows.length === 0) {
+    ui.scores.replaceChildren(heading, detail('No scores yet. Play in Competition mode to set one.'));
+    return;
+  }
+  const table = document.createElement('table');
+  const head = table.createTHead().insertRow();
+  for (const [text, numeric] of [
+    ['#', true],
+    ['Name', false],
+    ['Points', true],
+    ['Grade', false],
+    ['Instrument', false],
+    ['Difficulty', false],
+    ['Tempo', false],
+    ['Date', false],
+  ] as const) {
+    const th = document.createElement('th');
+    th.textContent = text;
+    if (numeric) th.className = 'num';
+    head.append(th);
+  }
+  const body = table.createTBody();
+  rows.forEach((row, i) => {
+    const tr = body.insertRow();
+    if (justSaved?.song === song.id && justSaved.rank === i) tr.className = 'is-new';
+    const cells: [string, boolean][] = [
+      [String(i + 1), true],
+      [row.name, false],
+      [String(row.points), true],
+      [`${row.grade} (${Math.round(row.score)}%)`, false],
+      [instrumentById(row.instrument).name, false],
+      [difficultyById(row.difficulty).name, false],
+      [tempoLevelById(row.tempo).name, false],
+      [DATE_FORMAT.format(new Date(row.date)), false],
+    ];
+    for (const [text, numeric] of cells) {
+      const td = tr.insertCell();
+      td.textContent = text;
+      if (numeric) td.className = 'num';
+    }
+  });
+  const wrap = Object.assign(document.createElement('div'), { className: 'scores-wrap' });
+  wrap.append(table);
+  ui.scores.replaceChildren(heading, wrap);
 }
 
 function block(title: string, pct: number | null, ...lines: (string | HTMLElement)[]): HTMLElement {
@@ -469,7 +709,13 @@ function showResults(summary: Summary, isBest: boolean): void {
       textContent: `${Math.round(summary.score)}% on ${difficultyById(settings.difficulty).name}`,
     }),
   );
-  if (isBest) overall.append(Object.assign(document.createElement('p'), { className: 'detail', textContent: 'New best' }));
+  if (competing()) {
+    overall.querySelector('.score')!.textContent = `${points(summary.score, settings.difficulty, settings.tempo)} points`;
+    overall.append(
+      detail(`${Math.round(summary.score)}% on ${difficultyById(settings.difficulty).name}, ${tempoLevelById(settings.tempo).name}`),
+    );
+  }
+  if (isBest) overall.append(detail('New best'));
 
   const timingLines: (string | HTMLElement)[] = [
     `On time ${counts.perfect} · Early ${summary.early} · Late ${summary.late}`,
@@ -503,7 +749,7 @@ function showResults(summary: Summary, isBest: boolean): void {
     focus,
   );
   ui.results.hidden = false;
-  ui.sheetSub.textContent = ui.sheetSub.textContent!.replace(/[^·]*$/, ` ${describeBest()}`);
+  ui.sheetSub.textContent = describeSheet();
 }
 
 // ---------------------------------------------------------------- frame loop
@@ -549,7 +795,12 @@ function onSetting(apply: () => void): () => void {
 }
 
 function init(): void {
+  // A saved song or instrument that no longer exists (such as the 5-string
+  // bass) falls back to the first one, so scores are filed under the song shown.
+  settings.song = songById(settings.song).id;
+  settings.instrument = instrumentById(settings.instrument).id;
   fillSongs();
+  fillTempoLevels();
   fillSelect(ui.instrument, INSTRUMENTS.map((i) => ({ value: i.id, label: i.name })), settings.instrument);
   fillSelect(ui.key, KEYS.map((k) => ({ value: k.id, label: k.name })), settings.key);
   fillSelect(ui.difficulty, DIFFICULTIES.map((d) => ({ value: d.id, label: d.name })), difficultyById(settings.difficulty).id);
@@ -563,6 +814,17 @@ function init(): void {
   ui.channel.value = settings.channel;
   ui.latency.value = String(settings.latencyMs);
   ui.gate.value = String(settings.gateDb);
+
+  for (const radio of ui.modes) {
+    radio.addEventListener(
+      'change',
+      onSetting(() => {
+        settings.mode = radio.value as Mode;
+        ui.results.hidden = true;
+      }),
+    );
+  }
+  ui.showScores.addEventListener('click', () => (ui.scores.hidden ? showScores() : hideScores()));
 
   ui.song.addEventListener(
     'change',

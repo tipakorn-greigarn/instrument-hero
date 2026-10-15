@@ -19,7 +19,7 @@ there is no account or server-side storage.
   Lamb, Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale
   warm-up, and more.
 - **Any major key**, with correct spelling of every note.
-- **Guitar, 4-string bass, and 5-string bass.** Each song is placed in an
+- **Guitar and 4-string bass.** Each song is placed in an
   octave that fits the instrument, and you can choose another when more than
   one fits. Guitar and bass are written an octave above where they sound, as
   in published music.
@@ -30,7 +30,11 @@ there is no account or server-side storage.
 - **Three difficulty levels** that change how strictly you are scored.
 - **Works with an audio interface**: choose the device and the input channel,
   watch the level meter, set a noise gate. A microphone works too.
-- **Best scores** per song, instrument, and difficulty, kept in your browser.
+- **Two modes.** Free play leaves every setting open. Competition fixes the
+  key, range, and metronome, offers three tempos, and keeps a top 10 of named
+  scores for each song.
+- **Scores kept in your browser**: a personal best per song, instrument, and
+  difficulty in free play, and the high-score tables in competition.
 
 ## Quick start
 
@@ -57,7 +61,9 @@ secure; to use the app from another machine, serve it over HTTPS.
 3. Play a note. The level meter should move well past the gate marker, and the
    note name should appear next to the Start button. Lower the noise gate if
    quiet notes are ignored; raise it if hum registers as notes.
-4. Choose a song, instrument, key, range, tempo, and difficulty.
+4. Choose **Free play** or **Competition** (see below), then a song,
+   instrument, and difficulty. In free play you also choose the key, range,
+   and tempo.
 5. Press **Start** (or the space bar). After one bar of count-in clicks, play
    each note as the cursor reaches it.
 
@@ -95,6 +101,28 @@ Every audio setup delays sound a little. If the summary says you were
 consistently late (or early) although you felt on the beat, press **Treat as
 latency** and the app will compensate from then on. You can also set the
 latency offset by hand under Audio input.
+
+## Competition
+
+Competition mode makes runs comparable, so each song has one table of the top
+10 scores across both instruments, all difficulties, and all tempos.
+
+- Every song is played in C major, at the default range for the instrument,
+  with the metronome on and no guide melody.
+- Tempo is Slow, Medium, or Fast: 75%, 100%, or 125% of the song's own tempo.
+- Points are the accuracy percentage x 10, multiplied by the difficulty
+  (Easy 0.8, Normal 1, Hard 1.25) and the tempo (Slow 0.8, Medium 1,
+  Fast 1.25). A perfect run on Normal at Medium tempo is 1000 points; on Hard
+  at Fast tempo it is 1563.
+- After a run that makes the top 10, type a name and press **Save score**
+  (or Enter). The name you used last is filled in for you. A run that does
+  not make the top 10 is not kept, and a run that was stopped does not count.
+- **High scores** above the staff shows the table for the selected song.
+- The simulated players can be used in competition, but their runs are not
+  entered in the tables.
+
+Input device, channel, noise gate, and latency offset stay adjustable,
+because they depend on your equipment rather than your playing.
 
 ## Difficulty
 

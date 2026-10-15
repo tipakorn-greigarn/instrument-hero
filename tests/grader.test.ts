@@ -158,7 +158,7 @@ describe('end to end', () => {
   for (const [instrumentId, songId, bpm] of [
     ['bass4', 'twinkle', 100],
     ['guitar', 'frere-jacques', 110],
-    ['bass5', 'row-row', 70],
+    ['bass4', 'row-row', 70],
     ['guitar', 'hot-cross-buns', 120],
   ] as const) {
     it(`grades a synthesized ${songId} on ${instrumentId} as near perfect`, () => {

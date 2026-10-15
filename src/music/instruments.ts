@@ -48,17 +48,6 @@ export const INSTRUMENTS: Instrument[] = [
     center: 38,
     legato: false,
   },
-  {
-    id: 'bass5',
-    name: 'Bass (5-string)',
-    clef: 'bass',
-    soundsBelowWritten: 12,
-    writtenKeyFifths: 0,
-    low: 23, // B0
-    high: 55,
-    center: 35,
-    legato: false,
-  },
 ];
 
 export function instrumentById(id: string): Instrument {

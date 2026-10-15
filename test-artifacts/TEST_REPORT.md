@@ -77,3 +77,30 @@ Browser (dev server):
 | Dragging the slider updates the box | Pass |
 | Changing song loads its default tempo into both controls | Pass |
 | Console errors | None |
+
+# Test report - v0.5.0, competition mode and high scores (2026-10-15)
+
+Automated: 4 files, 43 tests, all passed. New: tempo levels and rounding,
+points for each multiplier, tie ranking, top-10 trimming.
+
+Browser (dev server, Chromium). To exercise saving without an instrument, the
+simulated-player block on saving was disabled locally for the test and
+restored before the commit.
+
+| Check | Result |
+| --- | --- |
+| Competition: key shows C major and is disabled; range disabled; metronome on and disabled; guide off and disabled | Pass |
+| Tempo slider replaced by Slow / Medium / Fast; Fast on Major Scale (70 bpm) plays at 88 bpm | Pass |
+| Result shows points (947 for 75.75% on Normal, Fast) and the accuracy line | Pass |
+| Simulated run (block in place): "Simulated runs are not entered in the high scores." | Pass |
+| Qualifying run: name box focused; Enter with an empty name saves nothing | Pass |
+| Saved name is prefilled and selected on the next run; editing it saves the new name | Pass ("Tee", then "Sam") |
+| Equal points rank below the existing row; new row highlighted | Pass (saved as number 2) |
+| Full table (10 seeded rows): "Not in the top 10. Number 10 has 1410 points.", table shown | Pass |
+| Back to Free play: key, range, tempo (200 bpm), and guide restored and enabled; results hidden | Pass |
+| Instrument menu has Guitar and Bass (4-string) only | Pass |
+| Saved settings with a song id that no longer exists: score filed under the song shown | Fail, fixed, Pass |
+| 375 px wide with the score table open: no horizontal page scroll, table scrolls in its panel | Fail, fixed, Pass |
+| Console errors | None |
+
+Not run: real instrument; Safari and Firefox.
