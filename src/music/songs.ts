@@ -68,7 +68,7 @@ export function parseNotation(notation: string): SongNote[][] {
     );
 }
 
-export const GROUPS = ['Warm-ups', 'Nursery rhymes', 'Classical and holiday'];
+export const GROUPS = ['Warm-ups', 'Nursery rhymes', 'Classical and holiday', 'Jazz'];
 
 const DEFS: SongDef[] = [
   {
@@ -200,6 +200,23 @@ const DEFS: SongDef[] = [
       'C4:q. C4:q. | C4:q D4:e E4:q. | E4:q D4:e E4:q F4:e | G4:h. | ' +
       'C5:e C5:e C5:e G4:e G4:e G4:e | E4:e E4:e E4:e C4:e C4:e C4:e | ' +
       'G4:q F4:e E4:q D4:e | C4:h.',
+  },
+  {
+    // 12-bar jazz blues, walking quarter notes:
+    // C7 | F7 | C7 | Gm7 C7 | F7 | Fm7 Bb7 | C7 | A7 | Dm7 | G7 | C7 A7 | Dm7 G7 | C
+    // Chord tones on the beat, a step or half step into the next bar's root on
+    // beat 4. Chromatic notes are flats where possible, since sharps written in
+    // C turn into double sharps in the sharp keys.
+    id: 'jazz-blues',
+    title: 'Jazz Blues Walking Bass',
+    group: 'Jazz',
+    time: [4, 4],
+    beatQuarters: 1,
+    bpm: 100,
+    notation:
+      'C3 E3 G3 E3 | F3 A3 Eb3 D3 | C3 E3 G3 A3 | G3 D3 C3 E3 | ' +
+      'F3 A3 C3 E3 | F3 Ab3 Bb2 D3 | C3 E3 G3 Bb3 | A3 G3 E3 Eb3 | ' +
+      'D3 E3 F3 A3 | G3 F3 D3 B2 | C3 E3 A2 Eb3 | D3 F3 G3 B2 | C3:w',
   },
 ];
 

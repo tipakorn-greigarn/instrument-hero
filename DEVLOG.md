@@ -147,3 +147,27 @@ scrolls inside it.
 Verified: typecheck clean; 43 tests pass (4 new for points, tempo, and the
 table; the per-instrument tracker tests drop by 3 with the 5-string bass).
 Browser checks in test-artifacts/TEST_REPORT.md.
+
+## 2026-10-15 - Jazz blues walking bass (v0.6.0)
+
+Added a "Jazz" collection with one exercise: a 12-bar jazz blues walking
+bass line in quarter notes, written in C like every song, with a final bar
+on the tonic so the exercise resolves (13 bars). Changes:
+C7 | F7 | C7 | Gm7 C7 | F7 | Fm7 Bb7 | C7 | A7 | Dm7 | G7 | C7 A7 | Dm7 G7.
+Chord tones on the beat; beat 4 leads by step or half step into the next
+root. 100 bpm by default.
+
+Spelling: songs are transposed letter by letter, so a chromatic note
+written in C picks up a double accidental in keys that already alter that
+letter. Approach notes were chosen as flats from the chords (Bb, Eb, Ab)
+rather than passing Gb, Db, or sharps; the only double flat left is the
+minor third of the iv minor chord in Db (Bbb in Gbm7), which is the correct
+spelling. Range is A2 to Bb3 as written, 13 semitones, so it fits both
+instruments in every key.
+
+No chord symbols over the staff yet; the format has no place for them.
+
+Verified: 44 tests pass (new end-to-end grading case for the line on
+4-string bass at 120 bpm in G). Browser: new "Jazz" section in the song
+menu; rendered in C and Db with the expected accidentals; four bars per
+line at desktop width.

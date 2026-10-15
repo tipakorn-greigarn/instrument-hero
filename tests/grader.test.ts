@@ -160,6 +160,7 @@ describe('end to end', () => {
     ['guitar', 'frere-jacques', 110],
     ['bass4', 'row-row', 70],
     ['guitar', 'hot-cross-buns', 120],
+    ['bass4', 'jazz-blues', 120],
   ] as const) {
     it(`grades a synthesized ${songId} on ${instrumentId} as near perfect`, () => {
       const sampleRate = 48000;
