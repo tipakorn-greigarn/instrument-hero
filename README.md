@@ -15,10 +15,11 @@ there is no account or server-side storage.
 - **Standard notation.** Real staff, clef, key signature, and time signature,
   so you practice reading as well as playing.
 - **Arpeggio exercises** through the chord progressions standards are built
-  on: ii-V-I in major and minor, Autumn Leaves changes, rhythm changes, jazz
-  blues, and minor blues. Each chord starts on its lowest root on your
-  instrument and climbs 1-3-5-7 (a chord held for two bars comes back down
-  8-7-5-3), with chord symbols above the staff.
+  on: ii-V-I in major and minor, the A sections of Autumn Leaves and rhythm
+  changes, jazz blues, and minor blues. Each chord starts on its lowest root
+  on your instrument and climbs 1-3-5-7 (a chord held for two bars comes back
+  down 8-7-5-3; two chords in a bar get root and third each), with chord
+  symbols above the staff.
 - **Seventeen tunes in collections** (warm-ups, nursery rhymes, classical
   and holiday, jazz): Twinkle Twinkle Little Star, Mary Had a Little Lamb,
   Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale

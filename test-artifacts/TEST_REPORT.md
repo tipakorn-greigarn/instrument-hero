@@ -172,3 +172,11 @@ Browser (dev server):
 | Saints: F, Bb, C major | Pass |
 | Competition: key disabled on the song's first key | Pass |
 | Console errors | None |
+
+# Test report - v0.10.0, arpeggio A sections (2026-10-17)
+
+Automated: 4 files, 59 tests, all passed.
+
+Browser (dev server): rhythm changes (A section), bass, Bb: 8 bars on two
+lines; shared bars play root and third of each chord in quarters; final
+bar holds Bb; 15 chord symbols in place; no console errors. Pass.
