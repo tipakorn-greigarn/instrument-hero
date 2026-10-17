@@ -1,6 +1,7 @@
 # HANDOFF
 
-State as of 2026-10-17: v0.10.0 on `develop` (arpeggio exercises trimmed to
+State as of 2026-10-17: v0.11.0 on `develop` (arpeggio roots move to the
+nearest octave instead of always the lowest; v0.10.0: arpeggio exercises trimmed to
 the A sections of the standards, two notes per chord in shared bars; v0.9.0:
 each song offers only the few keys it is usually played in; v0.8.0 added arpeggio exercises and chord
 symbols; v0.7.0 added ties, pickup bars, and four traditional jazz tunes; v0.6.0 added a jazz blues

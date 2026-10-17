@@ -185,13 +185,31 @@ describe('arpeggio exercises', () => {
     return arrangement.measures.map((bar) => bar.map((n) => n.midi));
   };
 
-  it('starts each chord on its lowest root and goes up, then down in the second bar of a two-bar chord', () => {
+  it('starts on the lowest root, then takes the nearest root; up, then down in the second bar of a two-bar chord', () => {
     const bars = midis('arp-251-major', 'bass4', 'C');
-    expect(bars[0]).toEqual([38, 41, 45, 48]); // Dm7 from D2
-    expect(bars[1]).toEqual([31, 35, 38, 41]); // G7 from G1
-    expect(bars[2]).toEqual([36, 40, 43, 47]); // Cmaj7 up from C2
+    expect(bars[0]).toEqual([38, 41, 45, 48]); // Dm7 from D2, the lowest D
+    expect(bars[1]).toEqual([43, 47, 50, 53]); // G7 from G2, a fourth up rather than a fifth down
+    expect(bars[2]).toEqual([36, 40, 43, 47]); // Cmaj7 from C2: C3 would leave no room for the octave
     expect(bars[3]).toEqual([48, 47, 43, 40]); // and down from C3
     expect(bars[7]).toEqual([36]); // final root, held
+  });
+
+  it('moves a half step rather than jumping an octave', () => {
+    // Rhythm changes in Bb, bar 6: Ebmaj7 then Edim7.
+    const bar = midis('arp-rhythm-changes', 'bass4', 'Bb')[5];
+    expect(bar[2]! - bar[0]!).toBe(1);
+  });
+
+  it('keeps every arpeggio on the instrument in each of its keys', () => {
+    for (const song of SONGS.filter((s) => s.arpeggio)) {
+      for (const instrument of INSTRUMENTS) {
+        for (const keyId of songKeys(song)) {
+          const all = midis(song.id, instrument.id, keyId).flat() as number[];
+          expect(Math.min(...all), `${song.id} ${instrument.id} ${keyId}`).toBeGreaterThanOrEqual(instrument.low);
+          expect(Math.max(...all), `${song.id} ${instrument.id} ${keyId}`).toBeLessThanOrEqual(instrument.high);
+        }
+      }
+    }
   });
 
   it('places the roots for the instrument and key', () => {

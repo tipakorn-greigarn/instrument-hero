@@ -290,3 +290,22 @@ to me based on common practice.
 Verified: 59 tests pass (new: A sections are 8 bars; root-and-third rule).
 Browser: rhythm changes on bass in Bb, two lines of four bars, Bbmaj7-G7 as
 Bb-D, G-B, Edim7 from the low E; chord symbols in place.
+
+## 2026-10-17 - Arpeggios: nearest root instead of lowest (v0.11.0)
+
+Owner: reduce jumps; Eb to E should be the E a half step up, not the low E
+nearly an octave down. Applies to all arpeggio exercises (the generated
+ones; the walking line and the tunes are written out).
+
+The first chord still starts on the lowest root on the instrument. Each
+later chord takes the octave of its root closest to the previous chord's
+root (lower on a tie). Roots are kept at least an octave below the top of
+the instrument (G2 on bass, E4 on guitar) so the arpeggio and the octave of
+a descending bar always fit; that limit occasionally forces a larger drop
+(for example G2 back down to A1 when the minor ii-V-i repeats).
+
+Roots on bass in the usual keys, checked by printing them: every move is a
+fifth or less except those forced drops; rhythm changes bar 6 is Eb2-E2.
+
+Verified: 61 tests pass (new: half step instead of an octave, every
+arpeggio note on the instrument in every offered key).
