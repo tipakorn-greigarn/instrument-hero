@@ -1,4 +1,5 @@
-// Competition mode: fixed settings so runs can be ranked against each other,
+// Competition mode: fixed settings so runs can be ranked against each other
+// (the song's home key and default range, metronome on, no guide),
 // and points that reward harder difficulty and faster tempo. All songs share
 // one high-score table each, whatever the instrument, difficulty, or tempo.
 
@@ -22,8 +23,6 @@ export const TEMPO_LEVELS: TempoLevel[] = [
 /** Points multiplier per difficulty id. */
 export const DIFFICULTY_POINTS: Record<string, number> = { easy: 0.8, normal: 1, hard: 1.25 };
 
-/** Every song is written in C major; competition plays it there, at the default octave, with the metronome and no guide. */
-export const COMPETITION_KEY = 'C';
 
 export function tempoLevelById(id: string): TempoLevel {
   return TEMPO_LEVELS.find((t) => t.id === id) ?? TEMPO_LEVELS[1];

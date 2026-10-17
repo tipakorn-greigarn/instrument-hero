@@ -1,7 +1,7 @@
 // Renders an arrangement as standard notation with VexFlow, and provides the
 // playback cursor and per-note result coloring on top of it.
 
-import { Accidental, Barline, Beam, Dot, Formatter, Fraction, Renderer, Stave, StaveNote, Voice } from 'vexflow';
+import { Accidental, Barline, Beam, Dot, Formatter, Fraction, Renderer, Stave, StaveNote, StaveTie, Voice } from 'vexflow';
 import type { Arrangement } from '../music/arrange';
 import type { NoteResult, Target } from '../game/grader';
 import { midiName, pitchToVex } from '../music/theory';
@@ -85,6 +85,11 @@ export class SheetView {
       .getNoteStartX();
     const otherOffset = new Stave(0, 0, 300).addClef(clef).addKeySignature(writtenKey.vex).getNoteStartX();
 
+    /** The note an open tie starts from, and the system it is on. */
+    let tieFrom: { note: StaveNote; system: number } | null = null;
+    const drawTie = (first: StaveNote | null, last: StaveNote | null) =>
+      new StaveTie({ first_note: first, last_note: last, first_indices: [0], last_indices: [0] }).setContext(ctx).draw();
+
     for (let s = 0; s < systemCount; s++) {
       const leadOffset = s === 0 ? firstOffset : otherOffset;
       const noteArea = (available - leadOffset - (perSystem - 1) * plainOffset) / perSystem;
@@ -125,6 +130,15 @@ export class SheetView {
 
         measure.forEach((n, k) => {
           const note = notes[k];
+          if (n.tiedFrom && tieFrom) {
+            // A tie that crosses to a new line is drawn in two halves.
+            if (tieFrom.system === s) drawTie(tieFrom.note, note);
+            else {
+              drawTie(tieFrom.note, null);
+              drawTie(null, note);
+            }
+          }
+          tieFrom = n.tie ? { note, system: s } : null;
           system.points.push({ quarter: n.start, x: (note.getNoteHeadBeginX() + note.getNoteHeadEndX()) / 2 });
           if (n.noteIndex >= 0) this.cells[n.noteIndex] = this.addCells(system.points[system.points.length - 1].x, top);
         });

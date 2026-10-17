@@ -1,4 +1,4 @@
-# Test plan - v0.5.0
+# Test plan - v0.7.0
 
 ## Automated (vitest, run in Docker)
 
@@ -11,6 +11,7 @@
 | Note tracker | Every note across each instrument's range found once with correct pitch and attack time within 30 ms, at 44.1, 48, and 96 kHz; repeated same-pitch notes; legato pitch changes only in legato mode; silence |
 | Grader | Perfect run scores 100; good, late, wrong, and missed verdicts; wrong octave is wrong; time offset; live resolution order; short notes lose sustain points; letter grades |
 | End to end | Four synthesized song performances (bass 4, guitar; 4/4 and 6/8) graded with no wrong, missed, or late notes |
+| Ties and pickups | Tied chains graded as one note with the whole length; pickup starts so bar 2 is a downbeat; ties join equal pitches; every home key is known |
 | Competition | Tempo levels; points per difficulty and tempo; table ranking with ties; top-10 trimming |
 
 ## Browser (Chromium, dev server, simulated player input)

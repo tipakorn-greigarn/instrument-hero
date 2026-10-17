@@ -161,6 +161,8 @@ describe('end to end', () => {
     ['bass4', 'row-row', 70],
     ['guitar', 'hot-cross-buns', 120],
     ['bass4', 'jazz-blues', 120],
+    ['bass4', 'saints', 100],
+    ['guitar', 'closer-walk', 70],
   ] as const) {
     it(`grades a synthesized ${songId} on ${instrumentId} as near perfect`, () => {
       const sampleRate = 48000;
@@ -172,7 +174,7 @@ describe('end to end', () => {
       const lead = 0.5;
       const expected: Target[] = arrangement.notes.map((n) => ({
         time: n.start * secPerQuarter,
-        dur: n.quarters * secPerQuarter,
+        dur: n.held * secPerQuarter,
         midi: n.midi!,
       }));
       const signal = renderNotes(

@@ -171,3 +171,44 @@ Verified: 44 tests pass (new end-to-end grading case for the line on
 4-string bass at 120 bpm in G). Browser: new "Jazz" section in the song
 menu; rendered in C and Db with the expected accidentals; four bars per
 line at desktop width.
+
+## 2026-10-16 - Ties, pickups, and traditional jazz tunes (v0.7.0)
+
+Asked for beginner jazz heads. Most of them (Autumn Leaves, Blue Bossa,
+Summertime, C Jam Blues) are under copyright and the repo is public, so the
+owner chose from public-domain tunes. First round: four tunes that are free
+worldwide and need only ties and pickups, not swing.
+
+Format:
+- Ties: a token ending in `~` is tied to the next note. The arranger plays
+  and grades a tied chain as one note: the first note gets the whole length
+  (`held`), the continuations are drawn but get no target or lane marker.
+  Ties that cross to a new line are drawn as two halves.
+- Pickups: `pickup` is the first bar's length in quarters. The arranger
+  starts the song at `leadIn` = bar - pickup, so the metronome clicks the
+  silent beats and bar 2 falls on a downbeat.
+- `key`: the key a song is usually played in. Choosing a song loads it (like
+  the tempo), and competition now uses it instead of C. Existing songs have
+  no key, so they stay in C.
+
+Tunes (melodies looked up rather than written from memory, each
+cross-checked against a second source, syncopations straightened):
+- When the Saints Go Marching In, F, pickup of 3. De/fr/nl Wikipedia ABC,
+  checked against the singing-bell.com lead sheet.
+- Down by the Riverside, F, pickup of 3. Verse and chorus with its final
+  ending. free-notes.net lead sheet, checked against German Wikibooks ABC.
+  The sources differ in a few notes; this follows free-notes.
+- Careless Love, F. free-notes.net, checked against bushbanjo.net. Keeps the
+  free-notes chromatic Ab and Eb.
+- Just a Closer Walk with Thee, Bb (C is also common), one tie. Two hymnary.org
+  MusicXML files that agree on every pitch. Hymnary lists the tune as
+  anonymous and public domain; only Kenneth Morris's 1940 arrangement and a
+  1948 edition were copyrighted, and they are not used here.
+Keys from trad jazz charts on the iReal Pro forum (all in F for the first
+three; Bb and C split for Closer Walk).
+
+Verified: 50 tests pass (new: tie and pickup arrangement, ties join equal
+pitches, every home key is known, end-to-end grading of Saints on bass and
+Closer Walk on guitar). Browser: pickup bar and tie drawn; choosing a song
+loads its key and tempo; simulated run of Saints scored 100% with every note
+on time, so the pickup lines up with the clicks.

@@ -1,7 +1,8 @@
 # HANDOFF
 
-State as of 2026-10-15: v0.6.0 on `develop` (adds a jazz blues walking bass
-exercise; v0.5.0 added competition mode with
+State as of 2026-10-16: v0.7.0 on `develop` (adds ties, pickup bars, a home
+key per song, and four traditional jazz tunes; v0.6.0 added a jazz blues
+walking bass exercise; v0.5.0 added competition mode with
 per-song top-10 tables, removes the 5-string bass; v0.4.0's song collections
 and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest release. Gitflow: work on `develop`, releases merged to
 `main` and tagged. Remote: https://github.com/tipakorn-greigarn/instrument-hero
@@ -35,11 +36,16 @@ and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest
 - Monophonic only; chords are not graded.
 - Extra notes that are not in the score are not penalized, on any difficulty.
   Worth adding to Hard once attack detection is proven on a real instrument.
-- Major keys only; no ties, repeats, or pickup bars in the song format.
+- Major keys only; no repeats or swing in the song format. Ties (`~`) and
+  pickup bars (`pickup`) are supported.
 - Non-octave transposing instruments are supported by the data model
   (`writtenKeyFifths`) but none is defined or tested.
 
 ## Ideas for next steps
+
+- Swing eighths (written straight, played and graded long-short), then
+  US-only public-domain standards such as I Got Rhythm (1930). Only add songs
+  that are public domain worldwide unless the owner decides otherwise.
 
 - Chord symbols above the staff, for the walking bass line and future jazz
   exercises. Needs a field in the song format and VexFlow annotations.
