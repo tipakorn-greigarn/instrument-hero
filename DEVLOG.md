@@ -247,3 +247,24 @@ positions, lowest-root placement on bass and guitar, up/down rule, eighths
 for two chords in a bar, end-to-end grading of rhythm changes on bass).
 Browser: Autumn Leaves on bass in Bb starts Cm7 on C2, F7 on F1, Gm7 up then
 down; chord symbols readable and clear of the notes.
+
+## 2026-10-17 - A few usual keys per song (v0.9.0)
+
+The owner felt offering every song in all 12 keys was excessive. Each song
+now lists the keys it is usually played in (`keys`, most common first), and
+the Key menu offers only those. Songs without a list get C, G, F, D.
+
+- Scale warm-up: C, G, D, F, Bb.
+- Jazz tunes and the walking blues: F, Bb, C (Closer Walk: Bb, C, F). The
+  walking blues now opens in F instead of C.
+- Arpeggios: ii-V-I major C, F, Bb, Eb; ii-V-i minor G, D, C, A minor;
+  Autumn Leaves G and E minor; rhythm changes Bb, F, Eb; jazz blues F, Bb, C;
+  minor blues C, F, G minor.
+- `minor: true` names a song's keys by the relative minor (Bb shows as
+  G minor) in the menu and above the staff. The key signature is unchanged.
+- The range test now checks each song only in its own keys.
+- A saved key the song does not offer falls back to the song's first key.
+
+Verified: 58 tests pass (key lists valid, minor names). Browser: Autumn
+Leaves offers G minor and E minor; Twinkle offers C, G, F, D; Saints F, Bb,
+C; competition shows the first key, disabled; no console errors.

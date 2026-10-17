@@ -1,6 +1,7 @@
 // Song library. Every song is written in C major; the arranger transposes it
-// to the selected key and octave. A song's `key` is the key it is usually
-// played in, loaded when the song is chosen.
+// to the selected key and octave. A song's `keys` are the few keys it is
+// usually played in; the first is loaded when the song is chosen, and only
+// these are offered. `minor` songs are named by their relative minor.
 //
 // Notation: tokens separated by spaces, bars separated by "|".
 //   C4      quarter note (default duration)
@@ -22,7 +23,7 @@
 // Each song belongs to one collection. Collections are listed in GROUPS, in
 // the order they appear in the song menu.
 
-import { chordTone, parseChord, parsePitch, type Pitch } from './theory';
+import { chordTone, keyById, parseChord, parsePitch, pitchClassName, transpose, type Pitch } from './theory';
 
 export interface SongDef {
   id: string;
@@ -35,8 +36,10 @@ export interface SongDef {
   beatQuarters: number;
   /** Default tempo in metronome beats per minute. */
   bpm: number;
-  /** Key the song is usually played in; C when not given. */
-  key?: string;
+  /** Keys the song is usually played in, the usual one first; DEFAULT_KEYS when not given. */
+  keys?: string[];
+  /** In a minor key: keys are named by their relative minor (Bb as G minor). */
+  minor?: boolean;
   /** Length of the pickup bar in quarter notes, if the song starts with one. */
   pickup?: number;
   /** Chord symbols in C, one bar per notation bar. */
@@ -109,6 +112,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 70,
+    keys: ['C', 'G', 'D', 'F', 'Bb'],
     notation: 'C4 D4 E4 F4 | G4 A4 B4 C5 | C5 B4 A4 G4 | F4 E4 D4 C4',
   },
   {
@@ -244,6 +248,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
+    keys: ['F', 'Bb', 'C'],
     notation:
       'C3 E3 G3 E3 | F3 A3 Eb3 D3 | C3 E3 G3 A3 | G3 D3 C3 E3 | ' +
       'F3 A3 C3 E3 | F3 Ab3 Bb2 D3 | C3 E3 G3 Bb3 | A3 G3 E3 Eb3 | ' +
@@ -261,7 +266,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
-    key: 'F',
+    keys: ['F', 'Bb', 'C'],
     pickup: 3,
     notation:
       'C4 E4 F4 | G4:w | r:q C4 E4 F4 | G4:w | r:q C4 E4 F4 | G4:h E4:h | C4:h E4:h | D4:w | ' +
@@ -275,7 +280,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
-    key: 'F',
+    keys: ['F', 'Bb', 'C'],
     pickup: 3,
     notation:
       'E4 E4 D#4 | E4 G3:h A3 | C4 C4 D4:h | r:q E4 E4 D#4 | E4 D4 C4:h | r:q D4 D4 C#4 | D4 C4 B3:h | ' +
@@ -290,7 +295,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 80,
-    key: 'F',
+    keys: ['F', 'Bb', 'C'],
     notation:
       'E4:h. C4 | B3 G3 B3 D4 | C4:w | r:w | E4:h. F4 | G4 G4 A4 G4 | D4:w | r:h E4 F4 | ' +
       'E4:h. F4 | G4:h. Ab4 | A4:h F4:h | C4:h D4 Eb4 | E4:h. C4 | B3 G3 B3 D4 | C4:w',
@@ -304,7 +309,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 70,
-    key: 'Bb',
+    keys: ['Bb', 'C', 'F'],
     notation:
       'G4:q. G#4:e A4:e E4:e G4:e F#4:e | F4:w | D5:q. C5:e B4:e G4:e A4:e C5:e | A4:h G4:h | ' +
       'E5:q. E5:e E5:e C5:e D5:e E5:e | D5:e C5:e~ C5:h C5:e A4:e | G4 G4:e G4:e G4 A4:e B4:e | C5:w',
@@ -320,6 +325,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 80,
+    keys: ['C', 'F', 'Bb', 'Eb'],
     arpeggio: true,
     notation: '',
     chords:
@@ -333,7 +339,8 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 80,
-    key: 'Bb',
+    keys: ['Bb', 'F', 'Eb', 'C'],
+    minor: true,
     arpeggio: true,
     notation: '',
     chords:
@@ -348,7 +355,8 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
-    key: 'Bb',
+    keys: ['Bb', 'G'],
+    minor: true,
     arpeggio: true,
     notation: '',
     chords:
@@ -366,7 +374,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 80,
-    key: 'Bb',
+    keys: ['Bb', 'F', 'Eb'],
     arpeggio: true,
     notation: '',
     chords:
@@ -384,7 +392,7 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 90,
-    key: 'F',
+    keys: ['F', 'Bb', 'C'],
     arpeggio: true,
     notation: '',
     chords:
@@ -400,7 +408,8 @@ const DEFS: SongDef[] = [
     time: [4, 4],
     beatQuarters: 1,
     bpm: 100,
-    key: 'Eb',
+    keys: ['Eb', 'Ab', 'Bb'],
+    minor: true,
     arpeggio: true,
     notation: '',
     chords:
@@ -455,9 +464,25 @@ export function songById(id: string): Song {
   return SONGS.find((s) => s.id === id) ?? SONGS[0];
 }
 
+/** Keys for songs that do not list their own: the common beginner keys. */
+export const DEFAULT_KEYS = ['C', 'G', 'F', 'D'];
+
+/** Keys the song is offered in, the usual one first. */
+export function songKeys(song: SongDef): string[] {
+  return song.keys ?? DEFAULT_KEYS;
+}
+
 /** Key the song is usually played in. */
 export function homeKey(song: SongDef): string {
-  return song.key ?? 'C';
+  return songKeys(song)[0];
+}
+
+/** Name of a key for a song: "Bb major", or "G minor" for a minor song. */
+export function keyLabel(song: SongDef, keyId: string): string {
+  const key = keyById(keyId);
+  if (!song.minor) return key.name;
+  const tonic: Pitch = { step: key.tonicStep, alter: key.tonicAlter, octave: 4 };
+  return `${pitchClassName(transpose(tonic, 5, 9))} minor`;
 }
 
 /** Length of a full bar in quarter notes. */

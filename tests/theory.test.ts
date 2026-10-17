@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { arrange, defaultOctave, octaveOptions } from '../src/music/arrange';
 import { INSTRUMENTS, instrumentById } from '../src/music/instruments';
-import { GROUPS, SONGS, barQuarters, homeKey, parseChords, parseNotation, songById, songsByGroup, type Song } from '../src/music/songs';
+import { GROUPS, SONGS, barQuarters, homeKey, keyLabel, parseChords, songKeys, parseNotation, songById, songsByGroup, type Song } from '../src/music/songs';
 import { KEYS, keyById, parsePitch, pitchName, pitchToMidi, transposeChord, transposeFromC } from '../src/music/theory';
 
 describe('theory', () => {
@@ -72,8 +72,20 @@ describe('songs', () => {
     expect(transposeChord('C#m7', keyById('F#'))).toBe('F##m7');
   });
 
-  it('has a known home key for every song', () => {
-    for (const song of SONGS) expect(KEYS.map((k) => k.id), song.id).toContain(homeKey(song));
+  it('lists only known keys for every song, without repeats', () => {
+    for (const song of SONGS) {
+      const keys = songKeys(song);
+      for (const k of keys) expect(KEYS.map((key) => key.id), song.id).toContain(k);
+      expect(new Set(keys).size, song.id).toBe(keys.length);
+      expect(homeKey(song)).toBe(keys[0]);
+    }
+  });
+
+  it('names minor songs by their relative minor', () => {
+    expect(keyLabel(songById('arp-autumn-leaves'), 'Bb')).toBe('G minor');
+    expect(keyLabel(songById('arp-minor-blues'), 'Ab')).toBe('F minor');
+    expect(keyLabel(songById('arp-autumn-leaves'), 'G')).toBe('E minor');
+    expect(keyLabel(songById('saints'), 'F')).toBe('F major');
   });
 
   it('puts every song in exactly one known collection', () => {
@@ -88,10 +100,10 @@ describe('songs', () => {
 });
 
 describe('arrange', () => {
-  it('fits every song on every instrument in every key', () => {
+  it('fits every song on every instrument in each of its keys', () => {
     for (const song of SONGS) {
       for (const instrument of INSTRUMENTS) {
-        for (const key of KEYS) {
+        for (const key of songKeys(song).map(keyById)) {
           const options = octaveOptions(song, key, instrument);
           expect(options.length, `${song.id} ${instrument.id} ${key.id}`).toBeGreaterThan(0);
           expect(options.every((o) => o.fits), `${song.id} ${instrument.id} ${key.id}`).toBe(true);
