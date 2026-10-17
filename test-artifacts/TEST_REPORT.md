@@ -157,3 +157,18 @@ Browser (dev server):
 | Console errors | None |
 
 Not run: real instrument.
+
+# Test report - v0.9.0, a few usual keys per song (2026-10-17)
+
+Automated: 4 files, 58 tests, all passed.
+
+Browser (dev server):
+
+| Check | Result |
+| --- | --- |
+| Autumn Leaves key menu: G minor, E minor; sheet header follows the choice | Pass |
+| Minor blues: C minor, F minor, G minor | Pass |
+| Twinkle: C, G, F, D major; a saved key it does not offer falls back to C | Pass |
+| Saints: F, Bb, C major | Pass |
+| Competition: key disabled on the song's first key | Pass |
+| Console errors | None |

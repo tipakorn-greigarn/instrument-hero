@@ -1,7 +1,8 @@
 # HANDOFF
 
-State as of 2026-10-16: v0.7.0 on `develop` (adds ties, pickup bars, a home
-key per song, and four traditional jazz tunes; v0.6.0 added a jazz blues
+State as of 2026-10-17: v0.9.0 on `develop` (each song offers only the few
+keys it is usually played in; v0.8.0 added arpeggio exercises and chord
+symbols; v0.7.0 added ties, pickup bars, and four traditional jazz tunes; v0.6.0 added a jazz blues
 walking bass exercise; v0.5.0 added competition mode with
 per-song top-10 tables, removes the 5-string bass; v0.4.0's song collections
 and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest release. Gitflow: work on `develop`, releases merged to

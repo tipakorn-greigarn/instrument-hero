@@ -25,8 +25,11 @@ there is no account or server-side storage.
   warm-up, and more. The jazz collection has a 12-bar jazz blues walking
   bass line and four traditional tunes: When the Saints Go Marching In,
   Down by the Riverside, Careless Love, and Just a Closer Walk with Thee.
-- **Any major key**, with correct spelling of every note. Each song opens in
-  the key it is usually played in (the jazz tunes in F or Bb, the rest in C).
+- **The keys each song is usually played in**, two to five per song, with
+  correct spelling of every note: C, G, F, and D for the beginner tunes; F,
+  Bb, and C for the jazz tunes; the usual jazz keys for the arpeggio
+  exercises, named as minor keys where the progression is minor. A song
+  opens in its most common key.
 - **Guitar and 4-string bass.** Each song is placed in an
   octave that fits the instrument, and you can choose another when more than
   one fits. Guitar and bass are written an octave above where they sound, as
@@ -206,11 +209,12 @@ tests/         unit and end-to-end tests on synthesized audio
 ### Adding a song
 
 Append an entry to `DEFS` in `src/music/songs.ts`. Write it in C major and
-set `key` to the key it is usually played in; the notation, including ties
+set `keys` to the keys it is usually played in, the most common first (and
+`minor: true` for a minor-key song); the notation, including ties
 and pickup bars, is described at the top of that file. Only add songs that
 are in the public domain. Give it a `group`: one of the
 collections in `GROUPS`, or add a new name there to start a new collection. The tests check that every bar
-is full and that the song fits every instrument in every key.
+is full and that the song fits every instrument in each of its keys.
 
 ### Adding an instrument
 

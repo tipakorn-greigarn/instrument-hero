@@ -4,8 +4,8 @@ import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, ty
 import { NoteTracker } from './game/tracker';
 import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
-import { barQuarters, homeKey, songById, songsByGroup } from './music/songs';
-import { KEYS, keyById, midiName } from './music/theory';
+import { barQuarters, homeKey, keyLabel, songById, songKeys, songsByGroup } from './music/songs';
+import { keyById, midiName } from './music/theory';
 import {
   HIGH_SCORE_LIMIT,
   MAX_BPM,
@@ -167,11 +167,10 @@ function describeBest(): string {
 }
 
 function describeSheet(): string {
-  const key = keyById(playKey());
   const instrument = instrumentById(settings.instrument);
   const transposing = instrument.soundsBelowWritten === 12 ? ', sounds one octave below written' : '';
   const tempo = competing() ? ` · ${tempoLevelById(settings.tempo).name}, ${playBpm()} bpm` : '';
-  return `${key.name} · ${instrument.name}${transposing}${tempo} · ${describeBest()}`;
+  return `${keyLabel(songById(settings.song), playKey())} · ${instrument.name}${transposing}${tempo} · ${describeBest()}`;
 }
 
 /** Show the mode's controls: fixed ones are disabled and show the value in force. */
@@ -214,6 +213,9 @@ function fillTempoLevels(): void {
 function refresh(): void {
   const song = songById(settings.song);
   const instrument = instrumentById(settings.instrument);
+  // Only the keys the song is usually played in are offered.
+  if (!songKeys(song).includes(settings.key)) settings.key = homeKey(song);
+  fillSelect(ui.key, songKeys(song).map((k) => ({ value: k, label: keyLabel(song, k) })), playKey());
   const key = keyById(playKey());
 
   const options = octaveOptions(song, key, instrument);
@@ -802,7 +804,6 @@ function init(): void {
   fillSongs();
   fillTempoLevels();
   fillSelect(ui.instrument, INSTRUMENTS.map((i) => ({ value: i.id, label: i.name })), settings.instrument);
-  fillSelect(ui.key, KEYS.map((k) => ({ value: k.id, label: k.name })), settings.key);
   fillSelect(ui.difficulty, DIFFICULTIES.map((d) => ({ value: d.id, label: d.name })), difficultyById(settings.difficulty).id);
   for (const input of [ui.bpm, ui.bpmNumber]) {
     input.min = String(MIN_BPM);

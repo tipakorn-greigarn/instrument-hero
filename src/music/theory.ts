@@ -72,6 +72,11 @@ function accidentalText(alter: number): string {
   return alter > 0 ? '#'.repeat(alter) : 'b'.repeat(-alter);
 }
 
+/** Letter and accidental without the octave, e.g. "Bb". */
+export function pitchClassName(p: Pitch): string {
+  return `${LETTERS[p.step]}${accidentalText(p.alter)}`;
+}
+
 export function pitchName(p: Pitch): string {
   return `${LETTERS[p.step]}${accidentalText(p.alter)}${p.octave}`;
 }
