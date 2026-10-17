@@ -139,3 +139,21 @@ Browser (dev server):
 
 Not run: the tunes on a real instrument; a tie across a line break (none of
 the current songs has one at desktop width; covered by code path only).
+
+# Test report - v0.8.0, arpeggio exercises and chord symbols (2026-10-17)
+
+Automated: 4 files, 57 tests, all passed.
+
+Browser (dev server):
+
+| Check | Result |
+| --- | --- |
+| Arpeggios section lists six exercises | Pass |
+| Autumn Leaves, bass, Bb: Cm7 from C2, F7 from F1, Bbmaj7 from Bb1, Ebmaj7 from Eb2 | Pass |
+| Two-bar Gm7: up G-Bb-D-F, then down G-F-D-Bb | Pass |
+| Chord symbols above each bar, transposed (Am7b5 shown as Am7 with a flat 5) | Pass |
+| Range menu shows one placement (F1 to D3) | Pass |
+| Rhythm changes: two chords per bar as eighths | Pass |
+| Console errors | None |
+
+Not run: real instrument.

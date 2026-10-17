@@ -401,6 +401,15 @@ summary:focus-visible {
   will-change: transform;
 }
 
+/* Chord symbols above the staff, left-aligned on the note they fall on. */
+.chord {
+  position: absolute;
+  margin-left: -6px;
+  font: 600 15px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #1f1d1a;
+  white-space: nowrap;
+}
+
 /* Feedback lanes under each staff: one cell per note in each lane. */
 .lane-label {
   position: absolute;

@@ -212,3 +212,38 @@ pitches, every home key is known, end-to-end grading of Saints on bass and
 Closer Walk on guitar). Browser: pickup bar and tie drawn; choosing a song
 loads its key and tempo; simulated run of Saints scored 100% with every note
 on time, so the pickup lines up with the clicks.
+
+## 2026-10-17 - Arpeggio exercises and chord symbols (v0.8.0)
+
+Asked for arpeggio exercises over the fundamental progressions of the
+standards ("tunes like Autumn Leaves, rhythm changes", and jazz blues).
+Progressions are not copyrightable, so full forms are fine.
+
+Exercises (Arpeggios collection): ii-V-I in major (C), ii-V-i in minor
+(G minor), Autumn Leaves changes (32 bars, simplified, G minor), rhythm
+changes (32-bar AABA with I-VI7-ii-V and the III7-VI7-II7-V7 bridge, Bb),
+jazz blues (F), minor blues (C minor).
+
+The owner's rule, settled over a few rounds:
+- Plain arpeggios, not walking or voice-led lines (a first version started
+  each chord on the nearest chord tone; rejected as too much like walking).
+- Each chord starts from its lowest root on the instrument and goes up
+  1-3-5-7. A chord that lasts two bars goes up, then down 8-7-5-3. Two chords
+  in a bar go up in eighths. The last bar holds the final root.
+Because "lowest root on the instrument" depends on the key and instrument,
+these songs have no fixed notation: `arpeggio: true` songs are built from
+their chord symbols (`arpeggioMeasures`), and the arranger places each chord
+tone above the lowest root (`arpeggioPitch`). They have one range placement.
+An intermediate approach that kept a fixed line inside 16 semitones was
+dropped; the lowest-root rule needs at most a 10th above the lowest note,
+so it fits both instruments in every key anyway.
+
+Chord symbols: a `chords` string per song (bars like the notation), shown
+above the staff, transposed with the key, flats and sharps typeset. Added to
+the walking bass line too.
+
+Verified: 57 tests pass (new: chord parsing and transposition, chord
+positions, lowest-root placement on bass and guitar, up/down rule, eighths
+for two chords in a bar, end-to-end grading of rhythm changes on bass).
+Browser: Autumn Leaves on bass in Bb starts Cm7 on C2, F7 on F1, Gm7 up then
+down; chord symbols readable and clear of the notes.
