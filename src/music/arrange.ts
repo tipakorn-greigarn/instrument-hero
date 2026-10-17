@@ -101,14 +101,24 @@ export function defaultOctave(options: OctaveOption[], instrument: Instrument): 
   return closestTo(options, instrument.center).shift;
 }
 
-/** A chord tone of an arpeggio exercise, built on the lowest written root the instrument can play. */
-function arpeggioPitch(symbol: string, degree: number, writtenKey: KeyDef, instrument: Instrument): Pitch {
-  const chord = parseChord(symbol)!;
-  const root = transposeFromC(chord.root, writtenKey, 0);
-  const sounding = (p: Pitch) => pitchToMidi(p) - instrument.soundsBelowWritten;
-  while (sounding(root) - 12 >= instrument.low) root.octave--;
-  while (sounding(root) < instrument.low) root.octave++;
-  return chordTone(root, chord.quality, degree);
+/**
+ * Written root for a chord of an arpeggio exercise. The first chord takes the
+ * lowest root the instrument has; each later one takes the octave closest to
+ * the previous root (the lower on a tie), so Eb to E is a half step up rather
+ * than nearly an octave down. Roots stay an octave below the top of the
+ * instrument, so the arpeggio and its octave always fit.
+ */
+function arpeggioRoot(symbol: string, writtenKey: KeyDef, instrument: Instrument, previous: number | null): Pitch {
+  const root = transposeFromC(parseChord(symbol)!.root, writtenKey, 0);
+  const sounding = (octave: number) => pitchToMidi({ ...root, octave }) - instrument.soundsBelowWritten;
+  let best: number | null = null;
+  for (let octave = -1; octave <= 9; octave++) {
+    const midi = sounding(octave);
+    if (midi < instrument.low || midi + 12 > instrument.high) continue;
+    const better = best === null || (previous !== null && Math.abs(midi - previous) < Math.abs(sounding(best) - previous));
+    if (better) best = octave;
+  }
+  return { ...root, octave: best! };
 }
 
 export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, octaveShift: number): Arrangement {
@@ -122,6 +132,8 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
   let position = leadIn;
   /** The note a tie is holding over, if the previous note was tied. */
   let holding: ArrangedNote | null = null;
+  /** Arpeggio exercises: the chord being played and its root, carried from note to note. */
+  let chord: { symbol: string; root: Pitch } | null = null;
   song.measures.forEach((measure, m) => {
     const out: ArrangedNote[] = [];
     const length = measure.reduce((sum, n) => sum + n.quarters, 0);
@@ -131,8 +143,12 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
       if (name) chords.push({ start: position + (i * length) / barChords.length, name });
     });
     for (const note of measure) {
+      if (note.chordTone && note.chordTone.symbol !== chord?.symbol) {
+        const previous = chord ? pitchToMidi(chord.root) - instrument.soundsBelowWritten : null;
+        chord = { symbol: note.chordTone.symbol, root: arpeggioRoot(note.chordTone.symbol, writtenKey, instrument, previous) };
+      }
       const pitch = note.chordTone
-        ? arpeggioPitch(note.chordTone.symbol, note.chordTone.degree, writtenKey, instrument)
+        ? chordTone(chord!.root, parseChord(note.chordTone.symbol)!.quality, note.chordTone.degree)
         : note.pitch
           ? transposeFromC(note.pitch, writtenKey, octaveShift)
           : null;

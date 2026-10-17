@@ -180,3 +180,11 @@ Automated: 4 files, 59 tests, all passed.
 Browser (dev server): rhythm changes (A section), bass, Bb: 8 bars on two
 lines; shared bars play root and third of each chord in quarters; final
 bar holds Bb; 15 chord symbols in place; no console errors. Pass.
+
+# Test report - v0.11.0, nearest arpeggio roots (2026-10-17)
+
+Automated: 4 files, 61 tests, all passed. Root sequences printed for all six
+exercises on bass and guitar in their usual keys: moves of a fifth or less
+apart from drops forced by the top of the instrument; Ebmaj7-Edim7 is a half
+step on both instruments. Every note within each instrument's range in every
+offered key.

@@ -315,7 +315,8 @@ const DEFS: SongDef[] = [
       'E5:q. E5:e E5:e C5:e D5:e E5:e | D5:e C5:e~ C5:h C5:e A4:e | G4 G4:e G4:e G4 A4:e B4:e | C5:w',
   },
   // Seventh-chord arpeggios through the chord progressions that standards are
-  // built on. Each chord starts on its lowest root on the instrument: up
+  // built on. The first chord starts on the lowest root on the instrument and
+  // each later chord on the root closest to the one before; then up
   // 1-3-5-7 for a chord that lasts a bar, then down 8-7-5-3 in the second bar
   // of a two-bar chord; two chords in a bar get root and third each.
   {

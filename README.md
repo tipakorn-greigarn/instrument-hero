@@ -16,8 +16,9 @@ there is no account or server-side storage.
   so you practice reading as well as playing.
 - **Arpeggio exercises** through the chord progressions standards are built
   on: ii-V-I in major and minor, the A sections of Autumn Leaves and rhythm
-  changes, jazz blues, and minor blues. Each chord starts on its lowest root
-  on your instrument and climbs 1-3-5-7 (a chord held for two bars comes back
+  changes, jazz blues, and minor blues. The first chord starts on the lowest
+  root on your instrument, each later chord on the root closest to the one
+  before (Eb to E is a half step up), and climbs 1-3-5-7 (a chord held for two bars comes back
   down 8-7-5-3; two chords in a bar get root and third each), with chord
   symbols above the staff.
 - **Seventeen tunes in collections** (warm-ups, nursery rhymes, classical
