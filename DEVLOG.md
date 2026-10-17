@@ -268,3 +268,25 @@ the Key menu offers only those. Songs without a list get C, G, F, D.
 Verified: 58 tests pass (key lists valid, minor names). Browser: Autumn
 Leaves offers G minor and E minor; Twinkle offers C, G, F, D; Saints F, Bb,
 C; competition shows the first key, disabled; no console errors.
+
+## 2026-10-17 - Arpeggios: A sections, two notes per chord (v0.10.0)
+
+Owner: the A section is enough for the standards, and with more than one
+chord in a bar each chord gets two notes; which two, and what to keep, left
+to me based on common practice.
+
+- Autumn Leaves: the first A section, 8 bars (ii-V-I-IV, then ii-V-i in the
+  relative minor).
+- Rhythm changes: the A section in its last-A form, so it ends on I:
+  I-VI7 | ii-V | I-VI7 | ii-V | I7 (as ii-V of IV) | IV-#iv dim | ii-V | I.
+  The bridge and the first A's turnaround ending are dropped.
+- The jazz and minor blues stay whole (12 bars, no A section), and the two
+  8-bar ii-V-I drills are unchanged.
+- Two chords in a bar: root and third of each, in quarters. The third keeps
+  the major/minor quality audible; root and fifth was the alternative but is
+  the two-feel bass pattern, closer to the walking lines the owner wants to
+  leave for later. No more eighths in the arpeggio exercises.
+
+Verified: 59 tests pass (new: A sections are 8 bars; root-and-third rule).
+Browser: rhythm changes on bass in Bb, two lines of four bars, Bbmaj7-G7 as
+Bb-D, G-B, Edim7 from the low E; chord symbols in place.

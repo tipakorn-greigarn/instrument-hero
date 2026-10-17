@@ -317,7 +317,7 @@ const DEFS: SongDef[] = [
   // Seventh-chord arpeggios through the chord progressions that standards are
   // built on. Each chord starts on its lowest root on the instrument: up
   // 1-3-5-7 for a chord that lasts a bar, then down 8-7-5-3 in the second bar
-  // of a two-bar chord; two chords in a bar go up in eighths.
+  // of a two-bar chord; two chords in a bar get root and third each.
   {
     id: 'arp-251-major',
     title: 'ii-V-I in major',
@@ -347,10 +347,10 @@ const DEFS: SongDef[] = [
       'Bm7b5 | E7 | Am7 | Am7 | Bm7b5 | E7 | Am7 | Am7',
   },
   {
-    // ii-V-I-IV in major, then ii-V-i in the relative minor, in the 32-bar form of
-    // Autumn Leaves (simplified: no substitutions). Bb is the usual G minor.
+    // The A section of Autumn Leaves: ii-V-I-IV in major, then ii-V-i in the
+    // relative minor. Bb is the usual G minor.
     id: 'arp-autumn-leaves',
-    title: 'Autumn Leaves changes',
+    title: 'Autumn Leaves changes (A section)',
     group: 'Arpeggios',
     time: [4, 4],
     beatQuarters: 1,
@@ -359,17 +359,13 @@ const DEFS: SongDef[] = [
     minor: true,
     arpeggio: true,
     notation: '',
-    chords:
-      'Dm7 | G7 | Cmaj7 | Fmaj7 | Bm7b5 | E7 | Am7 | Am7 | ' +
-      'Dm7 | G7 | Cmaj7 | Fmaj7 | Bm7b5 | E7 | Am7 | Am7 | ' +
-      'Bm7b5 | E7 | Am7 | Am7 | Dm7 | G7 | Cmaj7 | Fmaj7 | ' +
-      'Bm7b5 | E7 | Am7 D7 | Gm7 C7 | Fmaj7 | Bm7b5 E7 | Am7 | Am7',
+    chords: 'Dm7 | G7 | Cmaj7 | Fmaj7 | Bm7b5 | E7 | Am7 | Am7',
   },
   {
-    // The 32-bar AABA form of I Got Rhythm: I-VI7-ii-V in the A sections, two
-    // chords to a bar, and III7-VI7-II7-V7 in the bridge. Bb is the usual key.
+    // The A section of rhythm changes (I Got Rhythm), as in the last A so it
+    // ends on I: I-VI7-ii-V twice, I7-IV-#iv dim, ii-V-I. Bb is the usual key.
     id: 'arp-rhythm-changes',
-    title: 'Rhythm changes',
+    title: 'Rhythm changes (A section)',
     group: 'Arpeggios',
     time: [4, 4],
     beatQuarters: 1,
@@ -377,11 +373,7 @@ const DEFS: SongDef[] = [
     keys: ['Bb', 'F', 'Eb'],
     arpeggio: true,
     notation: '',
-    chords:
-      'Cmaj7 A7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7 | Gm7 C7 | Fmaj7 F#dim7 | Cmaj7 A7 | Dm7 G7 | ' +
-      'Cmaj7 A7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7 | Gm7 C7 | Fmaj7 F#dim7 | Dm7 G7 | Cmaj7 | ' +
-      'E7 | E7 | A7 | A7 | D7 | D7 | G7 | G7 | ' +
-      'Cmaj7 A7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7 | Gm7 C7 | Fmaj7 F#dim7 | Dm7 G7 | Cmaj7',
+    chords: 'Cmaj7 A7 | Dm7 G7 | Cmaj7 A7 | Dm7 G7 | Gm7 C7 | Fmaj7 F#dim7 | Dm7 G7 | Cmaj7',
   },
   {
     // 12-bar jazz blues with the ii-V in bar 4, the #iv diminished in bar 6, and
@@ -432,7 +424,8 @@ function toneNote(symbol: string, degree: number, quarters: number, duration: st
 /**
  * Arpeggio bars from chord bars: a chord for one bar goes up 1-3-5-7; a chord
  * held for two bars goes up, then down from the octave 8-7-5-3; two chords in
- * a bar each go up in eighths. The last bar holds the final chord's root.
+ * a bar get two notes each, root and third, so the third still shows whether
+ * the chord is major or minor. The last bar holds the final chord's root.
  */
 export function arpeggioMeasures(bars: string[][]): SongNote[][] {
   const up = [0, 1, 2, 3];
@@ -440,7 +433,7 @@ export function arpeggioMeasures(bars: string[][]): SongNote[][] {
   const single = (i: number, symbol: string) => bars[i]?.length === 1 && bars[i][0] === symbol;
   return bars.map((chords, b) => {
     if (b === bars.length - 1) return [toneNote(chords[0], 0, 4, 'w')];
-    if (chords.length > 1) return chords.flatMap((c) => up.map((d) => toneNote(c, d, 0.5, '8')));
+    if (chords.length > 1) return chords.flatMap((c) => [0, 1].map((d) => toneNote(c, d, 1, 'q')));
     // Within a run of bars on the same chord, every second bar comes down.
     let run = 0;
     while (single(b - run, chords[0])) run++;

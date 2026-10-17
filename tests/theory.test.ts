@@ -199,9 +199,15 @@ describe('arpeggio exercises', () => {
     expect(midis('arp-251-major', 'bass4', 'F')[0][0]).toBe(31); // Gm7 from G1
   });
 
-  it('plays two chords in a bar as eighths, both going up', () => {
+  it('plays two chords in a bar as root and third of each, in quarters', () => {
     const bar = songById('arp-rhythm-changes').measures[0];
-    expect(bar.map((n) => n.quarters)).toEqual(Array(8).fill(0.5));
-    expect(bar.map((n) => n.chordTone!.degree)).toEqual([0, 1, 2, 3, 0, 1, 2, 3]);
+    expect(bar.map((n) => n.quarters)).toEqual([1, 1, 1, 1]);
+    expect(bar.map((n) => n.chordTone!.degree)).toEqual([0, 1, 0, 1]);
+    expect(bar.map((n) => n.chordTone!.symbol)).toEqual(['Cmaj7', 'Cmaj7', 'A7', 'A7']);
+  });
+
+  it('keeps the standards to their 8-bar A sections', () => {
+    expect(songById('arp-autumn-leaves').measures).toHaveLength(8);
+    expect(songById('arp-rhythm-changes').measures).toHaveLength(8);
   });
 });
