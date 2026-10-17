@@ -14,11 +14,14 @@ there is no account or server-side storage.
 
 - **Standard notation.** Real staff, clef, key signature, and time signature,
   so you practice reading as well as playing.
-- **Thirteen tunes in collections** (warm-ups, nursery rhymes, classical
+- **Seventeen tunes in collections** (warm-ups, nursery rhymes, classical
   and holiday, jazz): Twinkle Twinkle Little Star, Mary Had a Little Lamb,
   Frere Jacques, Ode to Joy, Row Row Row Your Boat (in 6/8), a scale
-  warm-up, a 12-bar jazz blues walking bass line, and more.
-- **Any major key**, with correct spelling of every note.
+  warm-up, and more. The jazz collection has a 12-bar jazz blues walking
+  bass line and four traditional tunes: When the Saints Go Marching In,
+  Down by the Riverside, Careless Love, and Just a Closer Walk with Thee.
+- **Any major key**, with correct spelling of every note. Each song opens in
+  the key it is usually played in (the jazz tunes in F or Bb, the rest in C).
 - **Guitar and 4-string bass.** Each song is placed in an
   octave that fits the instrument, and you can choose another when more than
   one fits. Guitar and bass are written an octave above where they sound, as
@@ -107,7 +110,7 @@ latency offset by hand under Audio input.
 Competition mode makes runs comparable, so each song has one table of the top
 10 scores across both instruments, all difficulties, and all tempos.
 
-- Every song is played in C major, at the default range for the instrument,
+- Every song is played in its usual key, at the default range for the instrument,
   with the metronome on and no guide melody.
 - Tempo is Slow, Medium, or Fast: 75%, 100%, or 125% of the song's own tempo.
 - Points are the accuracy percentage x 10, multiplied by the difficulty
@@ -148,7 +151,8 @@ This is an early version.
   and latency offset, and please report what you find.
 - One note at a time. Chords are not recognized.
 - Notes you play that are not in the score are not penalized.
-- Major keys only. No ties, repeats, or pickup bars yet.
+- Major keys only. No repeats or swing eighths yet; jazz tunes are written
+  and graded with straight eighths.
 - Developed and tested in Chromium. Safari and Firefox are untested.
 
 ## How it works
@@ -196,8 +200,10 @@ tests/         unit and end-to-end tests on synthesized audio
 
 ### Adding a song
 
-Append an entry to `DEFS` in `src/music/songs.ts`. Write it in C major; the
-notation is described at the top of that file. Give it a `group`: one of the
+Append an entry to `DEFS` in `src/music/songs.ts`. Write it in C major and
+set `key` to the key it is usually played in; the notation, including ties
+and pickup bars, is described at the top of that file. Only add songs that
+are in the public domain. Give it a `group`: one of the
 collections in `GROUPS`, or add a new name there to start a new collection. The tests check that every bar
 is full and that the song fits every instrument in every key.
 

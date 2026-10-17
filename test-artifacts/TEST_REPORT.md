@@ -121,3 +121,21 @@ Browser (dev server):
 | Console errors | None |
 
 Not run: playing the line on a real bass.
+
+# Test report - v0.7.0, ties, pickups, and traditional jazz tunes (2026-10-16)
+
+Automated: 4 files, 50 tests, all passed.
+
+Browser (dev server):
+
+| Check | Result |
+| --- | --- |
+| Choosing Just a Closer Walk with Thee loads Bb and 70 bpm | Pass |
+| Choosing When the Saints Go Marching In loads F | Pass |
+| Tie drawn in bar 6 of Closer Walk; no timing or pitch marker under the held half | Pass |
+| Saints: 3-beat pickup bar drawn with the time signature | Pass |
+| Saints, simulated player, 160 bpm: 31 of 31 notes on time, 100% | Pass |
+| Console errors | None |
+
+Not run: the tunes on a real instrument; a tie across a line break (none of
+the current songs has one at desktop width; covered by code path only).

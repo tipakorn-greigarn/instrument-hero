@@ -1,10 +1,10 @@
 import { AudioEngine, type Channel } from './audio/engine';
-import { COMPETITION_KEY, TEMPO_LEVELS, competitionBpm, points, tempoLevelById } from './game/competition';
+import { TEMPO_LEVELS, competitionBpm, points, tempoLevelById } from './game/competition';
 import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, type Target } from './game/grader';
 import { NoteTracker } from './game/tracker';
 import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
-import { barQuarters, songById, songsByGroup } from './music/songs';
+import { barQuarters, homeKey, songById, songsByGroup } from './music/songs';
 import { KEYS, keyById, midiName } from './music/theory';
 import {
   HIGH_SCORE_LIMIT,
@@ -136,7 +136,7 @@ function competing(): boolean {
 // the value in force; the free-play settings are kept for switching back.
 
 function playKey(): string {
-  return competing() ? COMPETITION_KEY : settings.key;
+  return competing() ? homeKey(songById(settings.song)) : settings.key;
 }
 
 function playBpm(): number {
@@ -388,7 +388,7 @@ async function start(): Promise<void> {
 
   const targets: Target[] = arrangement.notes.map((n) => ({
     time: n.start * secPerQuarter,
-    dur: n.quarters * secPerQuarter,
+    dur: n.held * secPerQuarter,
     midi: n.midi!,
   }));
   if (simulated || playGuide()) {
@@ -831,6 +831,7 @@ function init(): void {
     onSetting(() => {
       settings.song = ui.song.value;
       setBpm(songById(settings.song).bpm);
+      settings.key = homeKey(songById(settings.song));
       settings.octave = null;
     }),
   );

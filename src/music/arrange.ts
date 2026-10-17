@@ -2,7 +2,7 @@
 // pitches for the staff and sounding pitches for the grader.
 
 import type { Instrument } from './instruments';
-import type { Song } from './songs';
+import { barQuarters, type Song } from './songs';
 import { keyByFifths, pitchToMidi, transposeFromC, type KeyDef, type Pitch } from './theory';
 
 export interface ArrangedNote {
@@ -14,6 +14,12 @@ export interface ArrangedNote {
   /** Start position in quarter notes from the beginning of the song. */
   start: number;
   quarters: number;
+  /** How long the note sounds, including the notes tied to it; 0 for a rest or a tied continuation. */
+  held: number;
+  /** Continues the previous note through a tie; not played or graded on its own. */
+  tiedFrom: boolean;
+  /** Tied to the next note. */
+  tie: boolean;
   duration: string;
   dots: number;
   /** Index among the non-rest notes, -1 for a rest. */
@@ -30,6 +36,8 @@ export interface Arrangement {
   /** Non-rest notes in playing order. */
   notes: ArrangedNote[];
   totalQuarters: number;
+  /** Silent beats before the pickup, so bar 2 starts on a downbeat; 0 without a pickup. */
+  leadIn: number;
 }
 
 export interface OctaveOption {
@@ -88,26 +96,37 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
   const writtenKey = writtenKeyFor(concertKey, instrument);
   const measures: ArrangedNote[][] = [];
   const notes: ArrangedNote[] = [];
-  let position = 0;
+  // A pickup starts part way through a bar, so the metronome and the bar
+  // accents line up with the bars that follow.
+  const leadIn = song.pickup ? barQuarters(song) - song.pickup : 0;
+  let position = leadIn;
+  /** The note a tie is holding over, if the previous note was tied. */
+  let holding: ArrangedNote | null = null;
   song.measures.forEach((measure, m) => {
     const out: ArrangedNote[] = [];
     for (const note of measure) {
       const pitch = note.pitch ? transposeFromC(note.pitch, writtenKey, octaveShift) : null;
+      const tiedFrom = holding !== null && pitch !== null;
       const arranged: ArrangedNote = {
         measure: m,
         pitch,
         midi: pitch ? pitchToMidi(pitch) - instrument.soundsBelowWritten : null,
         start: position,
         quarters: note.quarters,
+        held: pitch && !tiedFrom ? note.quarters : 0,
+        tiedFrom,
+        tie: note.tie && pitch !== null,
         duration: note.duration,
         dots: note.dots,
-        noteIndex: pitch ? notes.length : -1,
+        noteIndex: pitch && !tiedFrom ? notes.length : -1,
       };
-      if (pitch) notes.push(arranged);
+      if (tiedFrom) holding!.held += note.quarters;
+      else if (pitch) notes.push(arranged);
+      holding = arranged.tie ? (holding ?? arranged) : null;
       out.push(arranged);
       position += note.quarters;
     }
     measures.push(out);
   });
-  return { song, instrument, concertKey, writtenKey, octaveShift, measures, notes, totalQuarters: position };
+  return { song, instrument, concertKey, writtenKey, octaveShift, measures, notes, totalQuarters: position, leadIn };
 }

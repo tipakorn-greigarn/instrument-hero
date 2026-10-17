@@ -1,10 +1,15 @@
 // Song library. Every song is written in C major; the arranger transposes it
-// to the selected key and octave.
+// to the selected key and octave. A song's `key` is the key it is usually
+// played in, loaded when the song is chosen.
 //
 // Notation: tokens separated by spaces, bars separated by "|".
 //   C4      quarter note (default duration)
 //   G4:h    explicit duration: w h q e s, with a trailing "." for dotted
 //   r:q     rest
+//   G4:w~   tied to the next note, which must be the same pitch
+//
+// A song with a pickup (anacrusis) has `pickup` set to its length in quarter
+// notes, and its first bar holds only the pickup notes.
 //
 // Each song belongs to one collection. Collections are listed in GROUPS, in
 // the order they appear in the song menu.
@@ -22,6 +27,10 @@ export interface SongDef {
   beatQuarters: number;
   /** Default tempo in metronome beats per minute. */
   bpm: number;
+  /** Key the song is usually played in; C when not given. */
+  key?: string;
+  /** Length of the pickup bar in quarter notes, if the song starts with one. */
+  pickup?: number;
   notation: string;
 }
 
@@ -33,6 +42,8 @@ export interface SongNote {
   /** VexFlow base duration: w h q 8 16. */
   duration: string;
   dots: number;
+  /** Tied to the next note. */
+  tie: boolean;
 }
 
 export interface Song extends SongDef {
@@ -54,7 +65,8 @@ export function parseNotation(notation: string): SongNote[][] {
     .filter((bar) => bar.length > 0)
     .map((bar) =>
       bar.split(/\s+/).map((token) => {
-        const [head, durText = 'q'] = token.split(':');
+        const tie = token.endsWith('~');
+        const [head, durText = 'q'] = token.replace(/~$/, '').split(':');
         const dots = durText.endsWith('.') ? 1 : 0;
         const base = DURATIONS[durText.replace('.', '')];
         if (!base) throw new Error(`Bad duration in token: ${token}`);
@@ -63,6 +75,7 @@ export function parseNotation(notation: string): SongNote[][] {
           quarters: base.quarters * (dots ? 1.5 : 1),
           duration: base.vex,
           dots,
+          tie,
         };
       }),
     );
@@ -218,6 +231,65 @@ const DEFS: SongDef[] = [
       'F3 A3 C3 E3 | F3 Ab3 Bb2 D3 | C3 E3 G3 Bb3 | A3 G3 E3 Eb3 | ' +
       'D3 E3 F3 A3 | G3 F3 D3 B2 | C3 E3 A2 Eb3 | D3 F3 G3 B2 | C3:w',
   },
+  // Traditional tunes, public domain. Melodies from public-domain sources
+  // (Wikipedia ABC, free-notes.net, hymnary.org), cross-checked against a
+  // second source, with syncopations straightened onto the beat. Keys are the
+  // ones trad jazz bands usually play them in.
+  {
+    id: 'saints',
+    title: 'When the Saints Go Marching In',
+    group: 'Jazz',
+    time: [4, 4],
+    beatQuarters: 1,
+    bpm: 100,
+    key: 'F',
+    pickup: 3,
+    notation:
+      'C4 E4 F4 | G4:w | r:q C4 E4 F4 | G4:w | r:q C4 E4 F4 | G4:h E4:h | C4:h E4:h | D4:w | ' +
+      'r:q E4 E4 D4 | C4:w | E4:h G4:h | G4 F4:h. | r:h E4 F4 | G4:h E4:h | C4:h D4:h | C4:w',
+  },
+  {
+    // Verse, then the chorus once with its final ending.
+    id: 'riverside',
+    title: 'Down by the Riverside',
+    group: 'Jazz',
+    time: [4, 4],
+    beatQuarters: 1,
+    bpm: 100,
+    key: 'F',
+    pickup: 3,
+    notation:
+      'E4 E4 D#4 | E4 G3:h A3 | C4 C4 D4:h | r:q E4 E4 D#4 | E4 D4 C4:h | r:q D4 D4 C#4 | D4 C4 B3:h | ' +
+      'r:q E4 E4 D#4 | E4:e D4:e C4 E4:e E4:e D#4 | E4 G3:h A3 | C4 C4 D4:h | r:q E4 E4 D#4 | E4 D4 C4 C4 | ' +
+      'D4 D4:e D4:e D4 F4 | E4:h D4:h | C4:w | r:q C4 D4 E4:e E4:e | F4 F4 F4 F4 | F4 F4 C4 D4:e D4:e | ' +
+      'E4 E4 E4 D4 | C4:h. C4 | D4:h D4 D4 | D4 F4 E4 D4 | C4:w',
+  },
+  {
+    id: 'careless-love',
+    title: 'Careless Love',
+    group: 'Jazz',
+    time: [4, 4],
+    beatQuarters: 1,
+    bpm: 80,
+    key: 'F',
+    notation:
+      'E4:h. C4 | B3 G3 B3 D4 | C4:w | r:w | E4:h. F4 | G4 G4 A4 G4 | D4:w | r:h E4 F4 | ' +
+      'E4:h. F4 | G4:h. Ab4 | A4:h F4:h | C4:h D4 Eb4 | E4:h. C4 | B3 G3 B3 D4 | C4:w',
+  },
+  {
+    // The verse and the refrain share this melody. Treated as anonymous and
+    // public domain by hymnary.org; only later arrangements were copyrighted.
+    id: 'closer-walk',
+    title: 'Just a Closer Walk with Thee',
+    group: 'Jazz',
+    time: [4, 4],
+    beatQuarters: 1,
+    bpm: 70,
+    key: 'Bb',
+    notation:
+      'G4:q. G#4:e A4:e E4:e G4:e F#4:e | F4:w | D5:q. C5:e B4:e G4:e A4:e C5:e | A4:h G4:h | ' +
+      'E5:q. E5:e E5:e C5:e D5:e E5:e | D5:e C5:e~ C5:h C5:e A4:e | G4 G4:e G4:e G4 A4:e B4:e | C5:w',
+  },
 ];
 
 export const SONGS: Song[] = DEFS.map((def) => ({ ...def, measures: parseNotation(def.notation) }));
@@ -231,6 +303,11 @@ export function songsByGroup(): { group: string; songs: Song[] }[] {
 
 export function songById(id: string): Song {
   return SONGS.find((s) => s.id === id) ?? SONGS[0];
+}
+
+/** Key the song is usually played in. */
+export function homeKey(song: SongDef): string {
+  return song.key ?? 'C';
 }
 
 /** Length of a full bar in quarter notes. */
