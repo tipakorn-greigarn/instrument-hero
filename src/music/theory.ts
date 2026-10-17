@@ -97,6 +97,41 @@ export function transposeFromC(p: Pitch, to: KeyDef, octaveShift: number): Pitch
   return { ...moved, octave: moved.octave + octaveShift };
 }
 
+/**
+ * A chord symbol written in C, moved to a key: the root is spelled like a
+ * note, the quality is kept. Returns null for a symbol without a root letter.
+ */
+export function transposeChord(symbol: string, to: KeyDef): string | null {
+  const m = /^([A-G])([#b]?)(.*)$/.exec(symbol);
+  if (!m) return null;
+  const root = transposeFromC(parsePitch(`${m[1]}${m[2]}4`), to, 0);
+  return `${LETTERS[root.step]}${accidentalText(root.alter)}${m[3]}`;
+}
+
+/** The 3rd, 5th, and 7th of each chord quality above the root, as (letter steps, semitones). */
+const CHORD_QUALITIES: Record<string, [number, number][]> = {
+  maj7: [[2, 4], [4, 7], [6, 11]],
+  m7: [[2, 3], [4, 7], [6, 10]],
+  '7': [[2, 4], [4, 7], [6, 10]],
+  m7b5: [[2, 3], [4, 6], [6, 10]],
+  dim7: [[2, 3], [4, 6], [6, 9]],
+};
+
+/** A seventh-chord symbol split into its root (in octave 4) and quality, or null if not recognized. */
+export function parseChord(symbol: string): { root: Pitch; quality: string } | null {
+  const m = /^([A-G][#b]?)(.*)$/.exec(symbol);
+  if (!m || !CHORD_QUALITIES[m[2]]) return null;
+  return { root: parsePitch(`${m[1]}4`), quality: m[2] };
+}
+
+/** A chord tone above a root: degree 0 is the root, 1 the third, 2 the fifth, 3 the seventh, 4 the octave. */
+export function chordTone(root: Pitch, quality: string, degree: number): Pitch {
+  if (degree === 0) return root;
+  if (degree === 4) return transpose(root, 7, 12);
+  const [steps, semitones] = CHORD_QUALITIES[quality][degree - 1];
+  return transpose(root, steps, semitones);
+}
+
 export function midiToFreq(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }

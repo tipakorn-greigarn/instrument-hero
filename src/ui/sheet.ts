@@ -20,6 +20,8 @@ interface Cells {
 }
 
 const SYSTEM_HEIGHT = 200;
+/** Vertical position of the chord symbols above each staff. */
+const CHORD_LINE = 6;
 /** Vertical position of the two feedback lanes below each staff. */
 const TIMING_LANE = 140;
 const PITCH_LANE = 168;
@@ -152,6 +154,11 @@ export class SheetView {
       // The cursor runs on to the final barline of the system.
       system.points.push({ quarter: system.endQuarter, x: x - 2 });
       this.systems.push(system);
+      for (const chord of arrangement.chords) {
+        if (chord.start >= system.startQuarter && chord.start < system.endQuarter) {
+          this.addChord(chord.name, this.xAt(system, chord.start), top);
+        }
+      }
       this.addLabel('Timing', top + TIMING_LANE);
       this.addLabel('Pitch', top + PITCH_LANE);
     }
@@ -168,16 +175,7 @@ export class SheetView {
     let index = this.systems.findIndex((s) => quarter < s.endQuarter);
     if (index < 0) index = this.systems.length - 1;
     const system = this.systems[index];
-    const points = system.points;
-    let x = points[0].x;
-    for (let i = 0; i < points.length - 1; i++) {
-      const a = points[i];
-      const b = points[i + 1];
-      if (quarter >= a.quarter) {
-        const f = Math.min(1, (quarter - a.quarter) / (b.quarter - a.quarter));
-        x = a.x + f * (b.x - a.x);
-      }
-    }
+    const x = this.xAt(system, quarter);
     this.cursor.hidden = false;
     this.cursor.style.transform = `translate(${x}px, ${system.top + 30}px)`;
     if (follow && index !== this.cursorSystem) {
@@ -188,6 +186,31 @@ export class SheetView {
       }
     }
     this.cursorSystem = index;
+  }
+
+  /** Horizontal position of a song position on a system, between its anchor points. */
+  private xAt(system: System, quarter: number): number {
+    const points = system.points;
+    let x = points[0].x;
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      if (quarter >= a.quarter) {
+        const f = Math.min(1, (quarter - a.quarter) / (b.quarter - a.quarter));
+        x = a.x + f * (b.x - a.x);
+      }
+    }
+    return x;
+  }
+
+  private addChord(name: string, x: number, top: number): void {
+    const chord = document.createElement('div');
+    chord.className = 'chord';
+    // Typeset flats and sharps; "b" is a flat only right after a note letter or before a number.
+    chord.textContent = name.replace(/^([A-G])b/, '$1\u266d').replace(/^([A-G])#/, '$1\u266f').replace(/b(\d)/g, '\u266d$1').replace(/#(\d)/g, '\u266f$1');
+    chord.style.left = `${x}px`;
+    chord.style.top = `${top + CHORD_LINE}px`;
+    this.lanes.append(chord);
   }
 
   private addLabel(text: string, y: number): void {

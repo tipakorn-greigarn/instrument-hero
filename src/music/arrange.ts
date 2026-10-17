@@ -3,7 +3,7 @@
 
 import type { Instrument } from './instruments';
 import { barQuarters, type Song } from './songs';
-import { keyByFifths, pitchToMidi, transposeFromC, type KeyDef, type Pitch } from './theory';
+import { chordTone, keyByFifths, parseChord, pitchToMidi, transposeChord, transposeFromC, type KeyDef, type Pitch } from './theory';
 
 export interface ArrangedNote {
   measure: number;
@@ -38,6 +38,8 @@ export interface Arrangement {
   totalQuarters: number;
   /** Silent beats before the pickup, so bar 2 starts on a downbeat; 0 without a pickup. */
   leadIn: number;
+  /** Chord symbols in the written key, with their positions in quarter notes. */
+  chords: { start: number; name: string }[];
 }
 
 export interface OctaveOption {
@@ -71,6 +73,13 @@ function soundingRange(song: Song, key: KeyDef, instrument: Instrument, shift: n
  * single closest placement is returned with fits=false.
  */
 export function octaveOptions(song: Song, concertKey: KeyDef, instrument: Instrument): OctaveOption[] {
+  if (song.arpeggio) {
+    // Arpeggios are placed from each chord's lowest root, so there is one placement.
+    const midis = arrange(song, concertKey, instrument, 0).notes.map((n) => n.midi!);
+    const low = Math.min(...midis);
+    const high = Math.max(...midis);
+    return [{ shift: 0, low, high, fits: low >= instrument.low && high <= instrument.high }];
+  }
   const key = writtenKeyFor(concertKey, instrument);
   const all: OctaveOption[] = [];
   for (let shift = -5; shift <= 4; shift++) {
@@ -92,10 +101,21 @@ export function defaultOctave(options: OctaveOption[], instrument: Instrument): 
   return closestTo(options, instrument.center).shift;
 }
 
+/** A chord tone of an arpeggio exercise, built on the lowest written root the instrument can play. */
+function arpeggioPitch(symbol: string, degree: number, writtenKey: KeyDef, instrument: Instrument): Pitch {
+  const chord = parseChord(symbol)!;
+  const root = transposeFromC(chord.root, writtenKey, 0);
+  const sounding = (p: Pitch) => pitchToMidi(p) - instrument.soundsBelowWritten;
+  while (sounding(root) - 12 >= instrument.low) root.octave--;
+  while (sounding(root) < instrument.low) root.octave++;
+  return chordTone(root, chord.quality, degree);
+}
+
 export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, octaveShift: number): Arrangement {
   const writtenKey = writtenKeyFor(concertKey, instrument);
   const measures: ArrangedNote[][] = [];
   const notes: ArrangedNote[] = [];
+  const chords: Arrangement['chords'] = [];
   // A pickup starts part way through a bar, so the metronome and the bar
   // accents line up with the bars that follow.
   const leadIn = song.pickup ? barQuarters(song) - song.pickup : 0;
@@ -104,8 +124,18 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
   let holding: ArrangedNote | null = null;
   song.measures.forEach((measure, m) => {
     const out: ArrangedNote[] = [];
+    const length = measure.reduce((sum, n) => sum + n.quarters, 0);
+    const barChords = song.chordBars[m] ?? [];
+    barChords.forEach((symbol, i) => {
+      const name = transposeChord(symbol, writtenKey);
+      if (name) chords.push({ start: position + (i * length) / barChords.length, name });
+    });
     for (const note of measure) {
-      const pitch = note.pitch ? transposeFromC(note.pitch, writtenKey, octaveShift) : null;
+      const pitch = note.chordTone
+        ? arpeggioPitch(note.chordTone.symbol, note.chordTone.degree, writtenKey, instrument)
+        : note.pitch
+          ? transposeFromC(note.pitch, writtenKey, octaveShift)
+          : null;
       const tiedFrom = holding !== null && pitch !== null;
       const arranged: ArrangedNote = {
         measure: m,
@@ -128,5 +158,5 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
     }
     measures.push(out);
   });
-  return { song, instrument, concertKey, writtenKey, octaveShift, measures, notes, totalQuarters: position, leadIn };
+  return { song, instrument, concertKey, writtenKey, octaveShift, measures, notes, totalQuarters: position, leadIn, chords };
 }
