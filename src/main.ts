@@ -2,9 +2,21 @@ import { AudioEngine, type Channel } from './audio/engine';
 import { TEMPO_LEVELS, competitionBpm, points, tempoLevelById } from './game/competition';
 import { DIFFICULTIES, Grader, difficultyById, type NoteResult, type Summary, type Target } from './game/grader';
 import { NoteTracker } from './game/tracker';
-import { arrange, defaultOctave, octaveOptions, type Arrangement } from './music/arrange';
+import { arrange, octaveOptions, songOctave, type Arrangement } from './music/arrange';
 import { INSTRUMENTS, instrumentById } from './music/instruments';
-import { barQuarters, homeKey, keyLabel, songById, songKeys, songsByGroup } from './music/songs';
+import { canExport, exportFileName, exportMusicXml, importMusicXml, readScoreFile } from './music/musicxml';
+import {
+  SONGS,
+  barQuarters,
+  buildSong,
+  homeKey,
+  keyLabel,
+  setUserSongs,
+  songById,
+  songKeys,
+  songsByGroup,
+  type SongDef,
+} from './music/songs';
 import { keyById, midiName } from './music/theory';
 import {
   HIGH_SCORE_LIMIT,
@@ -16,10 +28,12 @@ import {
   loadBest,
   loadHighScores,
   loadSettings,
+  loadUserSongDefs,
   rankFor,
   saveBest,
   saveHighScore,
   saveSettings,
+  saveUserSongDefs,
   type HighScore,
   type Mode,
 } from './storage';
@@ -81,6 +95,11 @@ const ui = {
   sheetSub: el('sheet-sub'),
   results: el('results'),
   showScores: el<HTMLButtonElement>('show-scores'),
+  importSong: el<HTMLButtonElement>('import-song'),
+  exportSong: el<HTMLButtonElement>('export-song'),
+  deleteSong: el<HTMLButtonElement>('delete-song'),
+  importFile: el<HTMLInputElement>('import-file'),
+  importMessage: el('import-message'),
   scores: el('scores'),
 };
 
@@ -220,9 +239,9 @@ function refresh(): void {
 
   const options = octaveOptions(song, key, instrument);
   if (settings.octave === null || !options.some((o) => o.shift === settings.octave)) {
-    settings.octave = defaultOctave(options, instrument);
+    settings.octave = songOctave(song, options, instrument);
   }
-  const octave = competing() ? defaultOctave(options, instrument) : settings.octave;
+  const octave = competing() ? songOctave(song, options, instrument) : settings.octave;
   fillSelect(
     ui.octave,
     options.map((o) => ({
@@ -238,6 +257,11 @@ function refresh(): void {
   ui.sheetTitle.textContent = song.title;
   ui.sheetSub.textContent = describeSheet();
   applyMode();
+  ui.deleteSong.hidden = !song.imported;
+  ui.exportSong.disabled = !canExport(song);
+  ui.exportSong.title = canExport(song)
+    ? 'Save the song as a MusicXML file to edit in a notation program'
+    : 'Arpeggio exercises are built from their chords, so there are no fixed notes to export';
   if (!ui.scores.hidden) renderScores();
   sheet.render(arrangement);
   saveSettings(settings);
@@ -754,6 +778,101 @@ function showResults(summary: Summary, isBest: boolean): void {
   ui.sheetSub.textContent = describeSheet();
 }
 
+// ---------------------------------------------------------------- imported songs
+
+/** Definitions of the imported songs, as stored. */
+let userDefs: SongDef[] = [];
+
+/** Load the imported songs from storage, skipping any that no longer build. */
+function loadUserSongs(): void {
+  userDefs = loadUserSongDefs().filter((def) => {
+    try {
+      buildSong(def);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  setUserSongs(userDefs.map(buildSong));
+}
+
+function storeUserSongs(): void {
+  saveUserSongDefs(userDefs);
+  setUserSongs(userDefs.map(buildSong));
+  fillSongs();
+}
+
+function showMessage(heading: string, lines: string[] = [], error = false): void {
+  const p = Object.assign(document.createElement('p'), { textContent: heading });
+  const list = document.createElement('ul');
+  list.append(...lines.map((line) => Object.assign(document.createElement('li'), { textContent: line })));
+  ui.importMessage.replaceChildren(p, ...(lines.length ? [list] : []));
+  ui.importMessage.classList.toggle('is-error', error);
+  ui.importMessage.hidden = false;
+}
+
+/** Switch to a song, loading its own key and tempo. */
+function selectSong(id: string): void {
+  stop();
+  settings.song = songById(id).id;
+  settings.key = homeKey(songById(settings.song));
+  settings.octave = null;
+  setBpm(songById(settings.song).bpm);
+  ui.results.hidden = true;
+  ui.song.value = settings.song;
+  refresh();
+}
+
+async function importFromFile(file: File): Promise<void> {
+  let xml: string;
+  try {
+    xml = await readScoreFile(new Uint8Array(await file.arrayBuffer()));
+  } catch (error) {
+    showMessage(`Could not import ${file.name}:`, [(error as Error).message], true);
+    return;
+  }
+  const result = importMusicXml(xml, file.name);
+  if (!result.ok) {
+    showMessage(`Could not import ${file.name}:`, result.errors, true);
+    return;
+  }
+  const def = result.def;
+  // A song with the same title is replaced; another title keeps its own id.
+  const existing = userDefs.findIndex((d) => d.title.toLowerCase() === def.title.toLowerCase());
+  if (existing >= 0) def.id = userDefs[existing].id;
+  else while (userDefs.some((d) => d.id === def.id)) def.id += '-2';
+  if (existing >= 0) userDefs[existing] = def;
+  else userDefs.push(def);
+  storeUserSongs();
+  selectSong(def.id);
+  const song = songById(def.id);
+  const summary = `${song.measures.length} bars in ${keyLabel(song, homeKey(song))}, ${song.time[0]}/${song.time[1]}, ${song.bpm} bpm.`;
+  showMessage(existing >= 0 ? `Replaced "${def.title}" with the new version: ${summary}` : `Imported "${def.title}": ${summary}`);
+}
+
+function exportCurrentSong(): void {
+  const song = songById(settings.song);
+  if (!canExport(song)) return;
+  const url = URL.createObjectURL(new Blob([exportMusicXml(song)], { type: 'application/vnd.recordare.musicxml+xml' }));
+  const link = Object.assign(document.createElement('a'), { href: url, download: exportFileName(song) });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showMessage(
+    song.imported
+      ? `Saved ${exportFileName(song)}. Edit it, then import it again to replace this song.`
+      : `Saved ${exportFileName(song)}. Edit it, then import it to add it to My songs.`,
+  );
+}
+
+function deleteCurrentSong(): void {
+  const song = songById(settings.song);
+  if (!song.imported || !window.confirm(`Delete "${song.title}" from My songs? This cannot be undone.`)) return;
+  userDefs = userDefs.filter((d) => d.id !== song.id);
+  storeUserSongs();
+  selectSong(SONGS[0].id);
+  showMessage(`Deleted "${song.title}".`);
+}
+
 // ---------------------------------------------------------------- frame loop
 
 function updateReadout(activeTracker: NoteTracker): void {
@@ -797,6 +916,7 @@ function onSetting(apply: () => void): () => void {
 }
 
 function init(): void {
+  loadUserSongs();
   // A saved song or instrument that no longer exists (such as the 5-string
   // bass) falls back to the first one, so scores are filed under the song shown.
   settings.song = songById(settings.song).id;
@@ -826,6 +946,14 @@ function init(): void {
     );
   }
   ui.showScores.addEventListener('click', () => (ui.scores.hidden ? showScores() : hideScores()));
+  ui.importSong.addEventListener('click', () => ui.importFile.click());
+  ui.importFile.addEventListener('change', () => {
+    const file = ui.importFile.files?.[0];
+    ui.importFile.value = '';
+    if (file) void importFromFile(file);
+  });
+  ui.exportSong.addEventListener('click', exportCurrentSong);
+  ui.deleteSong.addEventListener('click', deleteCurrentSong);
 
   ui.song.addEventListener(
     'change',

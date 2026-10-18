@@ -309,3 +309,48 @@ fifth or less except those forced drops; rhythm changes bar 6 is Eb2-E2.
 
 Verified: 61 tests pass (new: half step instead of an octave, every
 arpeggio note on the instrument in every offered key).
+
+## 2026-10-18 - MusicXML import and export (v0.12.0)
+
+Goal: write exercises in other editors. Decisions with the owner:
+- MusicXML, in the app (Import / Export / Delete under the song menu),
+  songs kept in the browser under "My songs".
+- An imported song stays in the key it is written in; the key comes from
+  the file. All 12 keys are offered and out-of-range placements are allowed.
+  It opens in its written octave when that placement exists.
+- Export writes the song back in its own key; importing a file with the same
+  title replaces the song. Built-in written songs export too; generated
+  arpeggio exercises do not.
+- Notes are the target. Chord symbols are imported for display only.
+- Only one melody line. Repeats rejected. Every problem reported with its
+  bar, not just the first.
+
+Implementation (`src/music/musicxml.ts`):
+- Import walks the single part measure by measure. Notes are moved from the
+  file's key to C with letter-preserving transposition (`tonicOfFifths`), so
+  moving back to the home key restores the original spelling and octave.
+  Lengths come from <duration>/<divisions> and must be one of the format's
+  note values. Pickup = a short first bar; a short last bar is allowed.
+  Tempo from <sound tempo> or <per-minute>, converted to metronome beats
+  (dotted quarters in 6/8). Minor mode sets `minor`.
+- Chord symbols keep their exact position with a new chord token form
+  "G7@3" (quarters into the bar); slash chords transpose both notes.
+- Rejected: several parts or staves, <backup>/<forward> or a second voice,
+  <chord/> notes, repeats/endings/D.C./D.S./segno/coda (barlines, sound
+  attributes, and words), tuplets, grace and cue notes, unwritable lengths,
+  key or time changes, odd bars, ties to a different pitch, microtones.
+- Export writes MusicXML 4.0 partwise with divisions 8, key, time, clef by
+  register, tempo, ties, harmony (with <offset> when a chord falls inside a
+  note), and an implicit pickup measure.
+- .mxl: a small zip reader (central directory, DecompressionStream
+  'deflate-raw'), following META-INF/container.xml.
+- Tests use jsdom for a real XML DOMParser (happy-dom was tried first: it
+  parses XML as HTML). jsdom is a dev dependency, installed in Docker.
+
+Verified: 89 tests pass (28 new: import of key, pickup, tie, chords, tempo,
+minor, 6/8; every rejection case; export round trips of an imported song and
+of four built-in songs; .mxl reading; slash chords). Browser: exported
+Saints, imported it as a new song (My songs, F major, all 12 keys),
+re-imported to replace (tempo change picked up), a file with a repeat and a
+grace note rejected with two bar-numbered lines, song kept after reload,
+chord symbols of an imported blues shown in F, delete removes it.

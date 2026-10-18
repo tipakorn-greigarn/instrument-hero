@@ -129,6 +129,40 @@ input[type='number'] {
   padding: 6px 8px;
 }
 
+/* Import, export, and delete for songs, under the song menu. */
+.song-tools {
+  display: flex;
+  gap: 6px;
+  align-items: end;
+}
+
+.song-tools button {
+  padding: 6px 10px;
+}
+
+.import-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.import-message.is-error {
+  border-color: var(--wrong);
+}
+
+.import-message p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.import-message ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+
 /* Segmented radio groups: the mode switch and the competition tempo levels. */
 .mode-switch,
 .tempo-levels {

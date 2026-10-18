@@ -2,7 +2,7 @@
 // pitches for the staff and sounding pitches for the grader.
 
 import type { Instrument } from './instruments';
-import { barQuarters, type Song } from './songs';
+import { barQuarters, splitChordToken, type Song } from './songs';
 import { chordTone, keyByFifths, parseChord, pitchToMidi, transposeChord, transposeFromC, type KeyDef, type Pitch } from './theory';
 
 export interface ArrangedNote {
@@ -96,6 +96,12 @@ function closestTo(options: OctaveOption[], center: number): OctaveOption {
   return options.reduce((best, o) => (distance(o) < distance(best) ? o : best));
 }
 
+/** Starting placement for a song: an imported song's own octave when it is offered, otherwise defaultOctave. */
+export function songOctave(song: Song, options: OctaveOption[], instrument: Instrument): number {
+  if (song.imported && options.some((o) => o.shift === 0)) return 0;
+  return defaultOctave(options, instrument);
+}
+
 /** The placement whose range is centered closest to the instrument's home register. */
 export function defaultOctave(options: OctaveOption[], instrument: Instrument): number {
   return closestTo(options, instrument.center).shift;
@@ -138,9 +144,10 @@ export function arrange(song: Song, concertKey: KeyDef, instrument: Instrument, 
     const out: ArrangedNote[] = [];
     const length = measure.reduce((sum, n) => sum + n.quarters, 0);
     const barChords = song.chordBars[m] ?? [];
-    barChords.forEach((symbol, i) => {
+    barChords.forEach((token, i) => {
+      const { symbol, at } = splitChordToken(token);
       const name = transposeChord(symbol, writtenKey);
-      if (name) chords.push({ start: position + (i * length) / barChords.length, name });
+      if (name) chords.push({ start: position + (at ?? (i * length) / barChords.length), name });
     });
     for (const note of measure) {
       if (note.chordTone && note.chordTone.symbol !== chord?.symbol) {

@@ -1,6 +1,7 @@
 // Settings, free-play best scores, and competition high scores, kept in localStorage.
 
 import type { Channel } from './audio/engine';
+import type { SongDef } from './music/songs';
 
 export interface Settings {
   song: string;
@@ -63,6 +64,7 @@ export const SIMULATED_SLOPPY = 'simulated-sloppy';
 const SETTINGS_KEY = 'instrument-hero.settings';
 const BEST_KEY = 'instrument-hero.best';
 const HIGH_KEY = 'instrument-hero.highscores';
+const SONGS_KEY = 'instrument-hero.songs';
 
 export const DEFAULT_SETTINGS: Settings = {
   song: 'hot-cross-buns',
@@ -155,4 +157,19 @@ export function saveHighScore(song: string, row: HighScore): number | null {
   all[song] = table;
   write(HIGH_KEY, all);
   return rank;
+}
+
+/** Songs imported from files, kept in this browser. */
+export function loadUserSongDefs(): SongDef[] {
+  try {
+    const raw = localStorage.getItem(SONGS_KEY);
+    const defs = raw ? JSON.parse(raw) : [];
+    return Array.isArray(defs) ? defs : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveUserSongDefs(defs: SongDef[]): void {
+  write(SONGS_KEY, defs);
 }

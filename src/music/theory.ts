@@ -107,10 +107,24 @@ export function transposeFromC(p: Pitch, to: KeyDef, octaveShift: number): Pitch
  * note, the quality is kept. Returns null for a symbol without a root letter.
  */
 export function transposeChord(symbol: string, to: KeyDef): string | null {
-  const m = /^([A-G])([#b]?)(.*)$/.exec(symbol);
-  if (!m) return null;
-  const root = transposeFromC(parsePitch(`${m[1]}${m[2]}4`), to, 0);
-  return `${LETTERS[root.step]}${accidentalText(root.alter)}${m[3]}`;
+  const [main, bass] = symbol.split('/');
+  const moveRoot = (text: string) => {
+    const m = /^([A-G])([#b]?)(.*)$/.exec(text);
+    if (!m) return null;
+    const root = transposeFromC(parsePitch(`${m[1]}${m[2]}4`), to, 0);
+    return `${LETTERS[root.step]}${accidentalText(root.alter)}${m[3]}`;
+  };
+  const top = moveRoot(main);
+  if (top === null || bass === undefined) return top;
+  const under = moveRoot(bass);
+  return under === null ? top : `${top}/${under}`;
+}
+
+/** The major key signature with this many sharps (positive) or flats, as its tonic pitch in octave 4. */
+export function tonicOfFifths(fifths: number): Pitch {
+  let p: Pitch = { step: 0, alter: 0, octave: 4 };
+  for (let i = 0; i < Math.abs(fifths); i++) p = fifths > 0 ? transpose(p, 4, 7) : transpose(p, 3, 5);
+  return { ...p, octave: 4 };
 }
 
 /** The 3rd, 5th, and 7th of each chord quality above the root, as (letter steps, semitones). */
