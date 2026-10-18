@@ -188,3 +188,24 @@ exercises on bass and guitar in their usual keys: moves of a fifth or less
 apart from drops forced by the top of the instrument; Ebmaj7-Edim7 is a half
 step on both instruments. Every note within each instrument's range in every
 offered key.
+
+# Test report - v0.12.0, MusicXML import and export (2026-10-18)
+
+Automated: 5 files, 89 tests, all passed (tests/musicxml.test.ts runs in
+jsdom).
+
+Browser (dev server; files handed to the import input by script, exports
+captured in the page instead of downloaded):
+
+| Check | Result |
+| --- | --- |
+| Export Saints: MusicXML file named when-the-saints-go-marching-in.musicxml, message shown | Pass |
+| Import it retitled: listed under My songs, F major, 12 keys offered, Delete shown | Pass |
+| Import again with tempo 120: "Replaced ...", still one song, tempo 120 | Pass |
+| File with a repeat and a grace note: rejected, "Bar 2: repeat signs..." and "Bar 8: grace notes..." | Pass |
+| Reload: imported song still there and rendered | Pass |
+| Imported blues: chord symbols shown in F | Pass |
+| Delete: song gone, storage empty, back to the first song | Pass |
+| Console errors | None |
+
+Not run: files saved by MuseScore, Sibelius, Finale, or Dorico.

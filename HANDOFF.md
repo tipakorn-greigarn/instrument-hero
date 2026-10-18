@@ -1,6 +1,7 @@
 # HANDOFF
 
-State as of 2026-10-17: v0.11.0 on `develop` (arpeggio roots move to the
+State as of 2026-10-18: v0.12.0 on `develop` (MusicXML import and export,
+"My songs" kept in the browser; v0.11.0: (arpeggio roots move to the
 nearest octave instead of always the lowest; v0.10.0: arpeggio exercises trimmed to
 the A sections of the standards, two notes per chord in shared bars; v0.9.0:
 each song offers only the few keys it is usually played in; v0.8.0 added arpeggio exercises and chord
@@ -45,6 +46,12 @@ and typed tempo are in it too; not yet released to `main`). v0.3.0 is the latest
   (`writtenKeyFifths`) but none is defined or tested.
 
 ## Ideas for next steps
+
+- Imported songs live in one browser (localStorage). A way to add an
+  imported song to the built-in library (a script that turns a MusicXML file
+  into a `DEFS` entry) would reuse `importMusicXml`.
+- Import has been tested on files written by the app and on hand-made test
+  files, not yet on files saved by MuseScore or other editors.
 
 - Swing eighths (written straight, played and graded long-short), then
   US-only public-domain standards such as I Got Rhythm (1930). Only add songs

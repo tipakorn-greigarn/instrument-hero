@@ -23,6 +23,13 @@
           <span>Song</span>
           <select id="song"></select>
         </label>
+        <div class="song-tools">
+          <button id="import-song" type="button" class="secondary" title="Add a song from a MusicXML file (.musicxml, .xml, or .mxl)">Import...</button>
+          <button id="export-song" type="button" class="secondary" title="Save the song as a MusicXML file to edit in a notation program">Export</button>
+          <button id="delete-song" type="button" class="secondary" hidden>Delete</button>
+          <input id="import-file" type="file" accept=".musicxml,.xml,.mxl" hidden />
+        </div>
+        <div id="import-message" class="import-message" role="status" hidden></div>
         <label class="field">
           <span>Instrument</span>
           <select id="instrument"></select>

@@ -19,6 +19,11 @@
 // `chords`, if given, has the chord symbols in C, bars separated by "|" like
 // the notation, one bar per notation bar. A bar's chords share it equally
 // (two chords in 4/4 fall on beats 1 and 3); "-" is a bar with no symbol.
+// A chord can also give its position: "G7@3" starts 3 quarter notes into the
+// bar (imported songs use this).
+//
+// Songs imported from MusicXML are kept in the browser and listed under
+// MY_SONGS; see setUserSongs and src/music/musicxml.ts.
 //
 // Each song belongs to one collection. Collections are listed in GROUPS, in
 // the order they appear in the song menu.
@@ -46,6 +51,8 @@ export interface SongDef {
   chords?: string;
   /** Notes are arpeggios built from the chords; `notation` is left empty. */
   arpeggio?: boolean;
+  /** Imported from a file: offered in every key, starting in its own octave. */
+  imported?: boolean;
   notation: string;
 }
 
@@ -442,20 +449,37 @@ export function arpeggioMeasures(bars: string[][]): SongNote[][] {
   });
 }
 
-export const SONGS: Song[] = DEFS.map((def) => {
+export function buildSong(def: SongDef): Song {
   const chordBars = parseChords(def.chords);
   return { ...def, measures: def.arpeggio ? arpeggioMeasures(chordBars) : parseNotation(def.notation), chordBars };
-});
+}
+
+export const SONGS: Song[] = DEFS.map(buildSong);
+
+/** Collection for imported songs, listed after the built-in ones. */
+export const MY_SONGS = 'My songs';
+
+let userSongs: Song[] = [];
+
+/** Replace the imported songs (kept in storage by the caller). */
+export function setUserSongs(songs: Song[]): void {
+  userSongs = songs;
+}
+
+export function getUserSongs(): Song[] {
+  return userSongs;
+}
 
 /** Songs by collection, in menu order. Collections without songs are left out. */
 export function songsByGroup(): { group: string; songs: Song[] }[] {
-  return GROUPS.map((group) => ({ group, songs: SONGS.filter((s) => s.group === group) })).filter(
-    (g) => g.songs.length > 0,
-  );
+  return [
+    ...GROUPS.map((group) => ({ group, songs: SONGS.filter((s) => s.group === group) })),
+    { group: MY_SONGS, songs: userSongs },
+  ].filter((g) => g.songs.length > 0);
 }
 
 export function songById(id: string): Song {
-  return SONGS.find((s) => s.id === id) ?? SONGS[0];
+  return SONGS.find((s) => s.id === id) ?? userSongs.find((s) => s.id === id) ?? SONGS[0];
 }
 
 /** Keys for songs that do not list their own: the common beginner keys. */
@@ -464,6 +488,12 @@ export const DEFAULT_KEYS = ['C', 'G', 'F', 'D'];
 /** Keys the song is offered in, the usual one first. */
 export function songKeys(song: SongDef): string[] {
   return song.keys ?? DEFAULT_KEYS;
+}
+
+/** A chord token split into its symbol and position in the bar ("G7@3"), or null position for an even share. */
+export function splitChordToken(token: string): { symbol: string; at: number | null } {
+  const [symbol, at] = token.split('@');
+  return { symbol, at: at === undefined ? null : Number(at) };
 }
 
 /** Key the song is usually played in. */

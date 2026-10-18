@@ -43,6 +43,9 @@ there is no account or server-side storage.
 - **Three difficulty levels** that change how strictly you are scored.
 - **Works with an audio interface**: choose the device and the input channel,
   watch the level meter, set a noise gate. A microphone works too.
+- **Your own songs and exercises** from any notation program that saves
+  MusicXML (MuseScore, Sibelius, Finale, Dorico): import a melody, play it in
+  any key, export it back to fix it, and import again to replace it.
 - **Two modes.** Free play leaves every setting open. Competition fixes the
   key, range, and metronome, offers three tempos, and keeps a top 10 of named
   scores for each song.
@@ -114,6 +117,37 @@ Every audio setup delays sound a little. If the summary says you were
 consistently late (or early) although you felt on the beat, press **Treat as
 latency** and the app will compensate from then on. You can also set the
 latency offset by hand under Audio input.
+
+## Importing your own songs
+
+Write a melody in a notation program, save or export it as MusicXML
+(`.musicxml`, `.xml`, or compressed `.mxl`), and press **Import...** under
+the song menu. The song appears under **My songs**, kept in this browser.
+
+- It opens in the key and octave it was written in. The Key menu offers all
+  12 keys; a key or range that does not fit your instrument is allowed and
+  marked "(out of range)".
+- Chord symbols are shown above the staff. They are not graded.
+- **Export** saves the selected song as MusicXML in its own key. Edit it and
+  import it again: a song with the same title is replaced. Built-in songs can
+  be exported too, as a starting point. The arpeggio exercises cannot,
+  because they are built from their chords.
+- **Delete** removes an imported song.
+
+The file must hold one melody line. Import stops with a list of every
+problem, each with its bar number, when the file has:
+
+- more than one part or staff, a second voice, or notes played together
+  (chords);
+- repeat signs, endings, D.C., D.S., or codas (write the music out in full);
+- triplets or other tuplets, grace notes, or lengths that cannot be one note
+  here (32nd notes, or a note longer than a bar; tie notes instead);
+- a key or time signature that changes during the song;
+- a bar with too much or too little music (only the first bar, as a pickup,
+  and the last bar may be short).
+
+Key signatures with seven sharps or flats, and Gb, are shown as their
+enharmonic keys (C# as Db, Gb as F#, Cb as B).
 
 ## Competition
 
